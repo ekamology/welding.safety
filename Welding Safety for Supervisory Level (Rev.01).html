@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="id" xmlns:mso="urn:schemas-microsoft-com:office:office" xmlns:msdt="uuid:C2F41010-65B3-11d1-A29F-00AA00C14882">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Judul diperbarui -->
+    <title>Kuis Interaktif - Keselamatan Pengelasan (Rev.01)</title>
+    <!-- Memuat Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Font kustom untuk tampilan yang lebih bersih */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Latar belakang abu-abu muda */
+        }
+        /* Transisi untuk pergantian pertanyaan */
+        .question-content {
+            transition: opacity 0.3s ease-in-out;
+        }
+        .option-item {
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+        /* Menyembunyikan layar */
+        .hidden {
+            display: none;
+        }
+
+        /* Styling untuk kotak feedback dan hint */
+        .feedback-box {
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 1.1em;
+            font-weight: 500;
+        }
+        .feedback-correct {
+            background-color: #dcfce7; /* green-50 */
+            border: 1px solid #bbf7d0; /* green-200 */
+            color: #166534; /* green-800 */
+        }
+        .feedback-incorrect {
+            background-color: #fee2e2; /* red-50 */
+            border: 1px solid #fecaca; /* red-200 */
+            color: #991b1b; /* red-800 */
+        }
+        .hint-box {
+            background-color: #fefce8; /* yellow-50 */
+            border: 1px solid #fef08a; /* yellow-200 */
+            color: #854d0e; /* yellow-800 */
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-style: italic;
+        }
+
+        /* Styling untuk opsi jawaban yang dikunci */
+        .option-locked.correct {
+            background-color: #dcfce7 !important;
+            border-color: #166534 !important;
+            color: #166534;
+        }
+        .option-locked.incorrect {
+            background-color: #fee2e2 !important;
+            border-color: #991b1b !important;
+            color: #991b1b;
+        }
+        .option-locked.actual-answer {
+             /* Menandai jawaban benar jika pengguna salah pilih */
+            box-shadow: 0 0 8px rgba(22, 101, 52, 0.7);
+            border-width: 2px;
+            border-color: #166534 !important;
+        }
+        .option-locked {
+            cursor: not-allowed !important;
+            opacity: 0.8;
+        }
+
+        /* [BARU] Styling untuk Palet Soal */
+        .palette-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px; /* Ukuran kotak */
+            height: 32px; /* Ukuran kotak */
+            border: 1px solid #d1d5db; /* gray-300 */
+            border-radius: 4px; /* rounded */
+            cursor: pointer;
+            font-weight: 600; /* semibold */
+            font-size: 0.875rem; /* text-sm */
+            color: #374151; /* gray-700 */
+            background-color: #ffffff; /* white */
+            transition: all 0.2s;
+        }
+        .palette-item:hover {
+            background-color: #f3f4f6; /* gray-100 */
+            border-color: #6b7280; /* gray-500 */
+        }
+        .palette-item.palette-active {
+            /* Status saat ini/aktif */
+            background-color: #2563eb; /* blue-600 */
+            color: #ffffff; /* white */
+            border-color: #2563eb; /* blue-600 */
+        }
+        .palette-item.palette-answered {
+            /* Status sudah dijawab */
+            background-color: #e5e7eb; /* gray-200 */
+            border-color: #9ca3af; /* gray-400 */
+            color: #4b5563; /* gray-600 */
+        }
+        .palette-item.palette-answered:hover {
+            background-color: #d1d5db; /* gray-300 */
+        }
+        .palette-item.palette-active.palette-answered {
+            /* Status aktif dan sudah dijawab */
+             background-color: #2563eb; /* blue-600 */
+             color: #ffffff; /* white */
+             border-color: #1d4ed8; /* blue-700 */
+             opacity: 0.9;
+        }
+
+    </style>
+
+<!--[if gte mso 9]><xml>
+<mso:CustomDocumentProperties>
+<mso:_dlc_DocId msdt:dt="string">7WWK5DNZC2DR-257847396-1674</mso:_dlc_DocId>
+<mso:_dlc_DocIdItemGuid msdt:dt="string">4454e4c3-f667-49b8-aeb5-fc3ecaf565f2</mso:_dlc_DocIdItemGuid>
+<mso:_dlc_DocIdUrl msdt:dt="string">https://austinengineering.sharepoint.com/sites/SHE/Indonesia/_layouts/15/DocIdRedir.aspx?ID=7WWK5DNZC2DR-257847396-1674, 7WWK5DNZC2DR-257847396-1674</mso:_dlc_DocIdUrl>
+</mso:CustomDocumentProperties>
+</xml><![endif]-->
+</head>
+<body class="flex items-center justify-center min-h-screen py-12 px-4">
+
+    <div class="max-w-3xl w-full">
+
+        <!-- 1. Layar Mulai Kuis -->
+        <div id="start-screen" class="bg-white p-8 md:p-12 rounded-xl shadow-2xl text-center">
+            
+            <!-- Logo Perusahaan (Dummy Placeholder Sesuai Permintaan) -->
+            <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCAEbBQADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD9U6KKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKK4/4ifFjwl8J9OhvfFmu2ujQzZEKTbmlm243bI1BZsblztBxuGcZFAHYUV8Y+P/8AgpJ4f01pbfwh4avNZlXcovNSkFtDkcKyou5mU9cNsNfOvjn9tv4s+NhNEmvp4etJFCm30OAW+PdZSWlUn2elcdj9Rdc8RaV4ZsXvdY1Sz0mzX71xfXCQxj6sxAH515B4t/bR+EXhGW4hfxUmrXUP/LHSYHuQ/GfllVfKP/fdfldrGtaj4i1Ca+1W/utTvpmzLdXkzSyOfVmYkk/U1SouOx9/+KP+Cl3h+1kQeHfBep6jGyne+qXUdoVPbCoJdw/EV5prX/BSL4gXUko0zw/4f0+BgQvnRTTyIfXd5igke64r5LopXCx7jfftsfGbUFkQ+MmgjYk7bfT7VNvsGEW79a5LUP2jPijqUnmS/EHxGjelvqU0I/JGUV53RSGdrcfG/wCIt3GY5/H/AIomQ/wya1csPyL1mN8SPFrNuPinWi3qdQmz/wChVztFAHZWnxo+IWnrstvHfiW2U/ww6xcKP0er9n+0J8ULGYSR/ELxMzek2rTSL/3yzkfpXn1FAHt2n/tqfGbTY1jTxpJMgOcXFjayk+xZoy3616NoX/BSLx9ZyQrqvh/QNSgUBX8lJreVz6lt7KCfZcV8l0U7isfoV4T/AOClHhO+DL4i8Kato0hZVRtPmjvU2nqzFvKYY9ArV7f4L/ak+Fnj5hHpfjPTo7klVFvqDNZyMzdFQTBd5z/dzX5DUUXCx+5ysJFDKQykZBHINOr8Y/APxp8c/C+RT4Y8UahpUKsX+ypLvtmYgAs0Lbo2OAOSpPFfT/w1/wCCkWq2Pk2vjvw7HqcK7VbUdHPlT4AwWaFjsdieflZF54FO4rH37RXnXwv+PvgT4wRgeGfEFvdXu3e+nTHybpAAMkxNhiBkAsuVz3r0WmIKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAK8++KvwN8G/GpdNTxdpb6idOMhtWjuZYTH5m3f9xhnOxOufu8Y5r0CloA+cb79gT4RXSERabqdmf70GouT/4/uFc3cf8ABN74byLJ5Ou+KIZGzt3XNuyr+HkAkfj+NfWVFAHwrqn/AATLO2RtO+IOTzsiutJxx2yyzfrtrzXxN/wTy+Kei27TafJoniD58LBZXrRylf7x85EUfQMa/TSilYdz8bvGHwB+I3gJbiTXPBmr2ltbrvmu0tmmt416ZaaPcgH/AAKuAr90K4Xxv8E/AfxIjmXxJ4U0zU55gA920AjucA5GJkxIv4MM0WC5+NNFfob8Qv8AgnD4V1bzLjwhr194euCxb7LfKLu2xj5VU5WReerMz8dq+XPiV+x58UPhn5s1xoLa7p0Yyb/Qy10mMZJKACRQO7MgHHU0rDueK0UUUhhRRRQAUUUUAFFFFABRRRQA+CeS1mjlhkaKWNg6SRsVZWHIII5BB719MfB39vTxz4AaGx8Tk+NNGXCk3km29jXnlZsEv1yRIGJwAGUV8yUUAfsR8I/j/wCCfjZY+b4a1dZL5I/Mm0u6Aiu4F+XJaMk5UFlBZCy5IG7NekV+HOl6te6HqFvf6deXGn31uweG6tZWjkjYdGVlIZT7g19sfAH/AIKCSBoNE+KA3Iflj8RWsWCvp58SjBHX50HYZU8tVXJsfd1FUtM1Sz1rT7a/0+6hvrG5QSwXNvIHjkQjIZWBIII6EVdpiCiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAG0nv0oP3c14T4x/bV+FPgTxTqXh/WdbuYNT0+YwXEaafO4Vx1AZVIP1FJyUd2dFDDVsTJxowcmuyue8ZoyK+b/+HgvwW/6GG8/8Fdx/8RS/8PBfgt/0MN5/4K7j/wCIqPaQ7nd/ZOP/AOfEvuZ9H5FGRXzh/wAPBfgt/wBDDef+Cu4/+Io/4eC/Bb/oYbz/AMFdx/8AEUe0h3D+ycf/AM+Jfcz6OpelfN4/4KCfBYD/AJGG8/8ABXcf/EV6d8I/jn4R+OGnX994Svpb63spRDM0tu8JViu4DDAE8elUpRlomY1svxeHh7SrScV3aPQ6KKKo88KKKKACvlD/AIeSfDP/AKAfiv8A8BLX/wCSK+r6/C+kxn6Q/wDDyT4Z/wDQD8V/+Alr/wDJFH/DyT4Z/wDQD8V/+Alr/wDJFfm9RSuOx+kP/DyT4Z/9APxX/wCAlr/8kUf8PJPhn/0A/Ff/AICWv/yRX5vUUXCx+kP/AA8k+Gf/AEA/Ff8A4CWv/wAkV9AfCv4kab8XPAmmeLNHgu7bTdQ83yor5FSZfLleJtwVmA+ZCRgngjp0r8Xq/Vv9h/8A5Nf8Gf8Ab7/6Wz0xWPdaKKKYgooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKSloAKKKKAEPNAFG4DuKp32qWemW7T3d1DawL96SaRUUfUkgUDUW9i50pPrXCXvx2+G+myFLvx94ZtnH8MusW6n8i9U/+GjvhWv8AzUXwv/4OLc/+z0rrudCw1Z7Qf3M9Hx6UV5yv7R/wsb/mo3hX/wAHNv8A/F1e0/44fDvVnCWPjrw3dueiwatbufyD0roTw9Zbwf3HdUVVtb23vIVmgnjniblXjcMp+hFWQwPQ5qjBprcWiiigQUUUUAFFFFAHlPxV/Zn+H3xhjmk13QY4tTkz/wATbT8W92CQBkuBiTAGAJAwHYV8WfGH9gHxl4JFxqHhGb/hMNIUs32eNfLvol+Y8x52y4AAyh3MTwgFfpTRQO5+Gl5Zz6fdzWt1BJbXMDtFLDMpR0ZThlZTypBBBB6YqKv19+MX7OHgj43Wb/2/pYg1UKFi1ix2x3ceOgLYIdccbXDAAnGDyPz2+PH7IHjP4J+dqKx/8JH4YU/8haxjIMI5/wBdFkmPp97LLyo3ZOKmw7nhdFFFIYUUUUAFFFFABRRRQAUUUUAev/AL9p3xX8BNQ2WMn9q+HpnDXOiXUhEZOeWibnynI43AEHjcrbVx+nPwn+MHhj4z+Go9a8M34uY/lFxayYW4tHIzslTPB4OCMqcEqSOa/Geus+GPxS8R/CHxZbeIfDV6bS9i+WSNhuhuIiRuilTI3KcdOCCAylWAYNMTR+0lFeTfs/8A7RHh/wCPnhk3enn7DrVso+36TK4MkDH+JT/FGT0bA9CAeK9ZqiQooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAG+lfjH+1f8A8nG/ED/sKSfyFfs56V+Mf7V//JxvxA/7Ckn8hXJiPhR+g8Gf75U/w/qjyeiiivPP2IKKKKACv0Y/4Jc/8iD40/7CUX/oqvznr9GP+CXP/Ig+NP8AsJRf+iq6KPxo+Q4q/wCRXP1X5o+3qKKK9M/CwooooAK/C+v3Qr8L6TGgoooqSgooooAK/Vv9h/8A5Nf8Gf8Ab7/6Wz1+Ulfq3+w//wAmv+DP+33/ANLZ6aEz3WiiiqJCiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAEzSE1HNMkMbPIyoigksxwBivmT4xft/8Aw7+G5ms9CmPjbWU48rTZALVTwfmuCCpGCf8AVh+Rg4pOSirtnZhcHiMZPkoQcn5H08Tj2rhPiJ8cPAnwqhd/FPinT9IkVQ/2WSXzLllJAysKZkYc9lOOp4r8yfin+3J8VPiVJLFBrJ8KaWT8tnoRML4DEgtNkyFsEA7SqnH3RzXz/JI8js7szux3MzHJJ9Sa5ZYhfZR97guDas7Sxc+XyWr+/Y/SHx5/wU48IaOxh8KeGtR8RyrJtNxeSCygK44ZTh3PPZkX614D4x/4KNfFjxECmktpPhaMSb1ksbMTSlf7jNMXU/UKDXy1RXNKtN9T7LDcN5bhv+XfM+71/Db8D0bxB+0Z8UfFE0smoePvEDiUEPFBfyQRHPUeXGVXHtivO5JHmkZ3ZndmLFmOSxPUk9zTaKybb3PfpYejRVqcEl5JIKKKKRvZdgooooDlXYmtbuexuI7i2mkt7iNgySxMUdWHQhhyD9K9I8O/tOfFfwvdCex+IGvOy9EvrxruMY/2Jiy/pXmNFNSa2OephaFZWqQTXmkfV/gv/gpF8UPD8cMOt2+keKIlfMk1xbm3uHU/whoiI1A7HyyfXNe/+Af+CmHgXXvKh8U6LqfhW4dyGmixe2yLxgsyhZMnngRnGOpr80aK1jWmup8/ieGctxF7U+V91p+Gx+4PgD4weC/ijarP4W8S6drIKCVobeYedGp4BeI4dOnRgDXZqwPTmvwRtLuewuorm2mkt7iFg8c0LFHRgchlYcgg8givoj4U/t5fFD4cyQW+o6ivjHSUwDb6wS023dklbgfPuI4y5cDPSumOIT+JHxuN4NrU7ywk+byej/y/I/WbNAr5u+Df7d3w4+KRt7LULtvB+uSYAtNWcLC7YyRHOPkIzwN2wseApr6PjZZFDKQwPQ10xkpK6Pg8ThK+Dn7OvBxfn/WpJRSUtUcgUh9DyKWigD4+/aK/YN0jxdHda98PI4dC1sJvfRRhLO7YHPydoWIJAA+QkKMJlmr4A8QeHdT8J61d6RrNhPpup2r+XNa3KFHRuvIPYggg9CCCODX7gV5L8eP2b/C/x70Yx6pCLDXIYyllrVugM0HJIVhx5keSSUJ/ibBUnNIZ+RNFdr8WPg/4m+C/iiTQ/EtmIJTlre6hJe3uowcb42wNw9QQCM4YA1xVSUFFFFABRRRQAUUUUAFFFFAHQeBPHmt/DXxRZeIPD969hqdq25XX7rj+JGXoysOCp61+rP7PPx+0f4+eDl1Gz22es2u2PUtM3ZaCQg4Zc8lGwSrexB5Br8hq674V/FDXfg/40svEvh+5MN3bnbLC3+ruYSQWhkX+JWwPcEKwIZVIaYj9oqK4r4S/FLRfjH4HsfEuhTA28/yTW7EGS1mAG+FwOjDI+oKkcMDXa1RIUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUlAC0UUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQA30r8Y/2r/+TjfiB/2FJP5Cv2c9K/GP9q//AJON+IH/AGFJP5CuTEfCj9B4M/3yp/h/VHk9FFFeefsQUUUUAFfox/wS5/5EHxp/2Eov/RVfnPX6Mf8ABLn/AJEHxp/2Eov/AEVXRR+NHyHFX/Irn6r80fb1FFFemfhYUUlLQAlfhhX7oV5J/wAMn/CL/oRNL/J//iqTVxn5FUV+u3/DJ/wi/wChD0v8n/8AiqP+GT/hF/0Iel/k/wD8VRYdz8iaK/Xb/hk/4Rf9CHpf5P8A/FUf8Mn/AAi/6EPS/wAn/wDiqLBc/Imv1b/Yf/5Nf8Gf9vv/AKWz1tf8Mn/CL/oRNL/J/wD4qvQvCfhPSPA2g22iaFYRabpVru8i1hztTcxdsZJPLMx/GhKwrmzRRRTEFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFACfdpOaP4qx/E/inSvBeiXesa3qFvpml2qb5rq6kCIgyAMk9ySAB1JIAyTQOMXJqMVdmv/KvAv2gf2yvBPwIabTjL/wkfilf+YNYyAGIkEgzyYIjHA4wX+ZTtIOR8q/tJ/8ABQTV/GMl34f+G8lxoWh7mik1rlLy7UcZj7wIeSD/AKwjafkORXxq7tI7O5ZnYlmZjkknqSa5Kle2kT9HyjhOVZKtjtF/L1+fb8z1742ftUeP/jpcSxazqhsNDY/JomnExWwA2kbxkmQ5UHLk4OdoUHFeP0UVxSk5O7P1LD4WjhIKnQgopdgoooqDpCiiigAooooAKKKKACiiigAooooAKKKKACiiigAr2v4H/tceP/gbJbWtjqB1jw6jDfomosXhC5ywib70R5bGDjJyVPSvFKKqMnF3icmJwtDFwdOvBST7n7A/AX9rzwN8eI4bKzuv7F8TFcvol+4WVyF3MYm6SgYY8YYBcsq17mG6V+B9vcS2s8c8MjwzRsHSSNirKwOQwI5BB5yK+1f2a/8AgoTqHhv7L4d+JrTatpg2RQ6/GN1zbr93NwBzKoGCXH7z5SSJC3HdTr30kflmb8J1KCdfA3lH+XqvTv8An6n6ODFH3qz9F1qw8RaZbajpl5b6hYXKCWC5tZFkjkU9GVlJBHuK0O1dZ+dtOLsxaKSloEcZ8U/hX4d+MPhO58P+JLP7TayfNFNHhZraXBCyxPg7WGfQgjIYEEg/lZ8ePgL4g+Ani5tJ1dftWn3G59O1WJCsV5GCMkDJ2uuQGQklSRgsrKzfsNXI/E74Y6D8XPB954b8R2v2mxn+ZJEwJbeUA7ZYmIO11ycHkEEggqSCmrjPxdor0L44fBPXfgT41m0LWE8+2fMljqUaFYryLPDLnO1hkBlySp7kFWbz2pKCiiigAooooAKKKKACiiigD2n9lf8AaBufgR4+SW6dpfC+qMkGqW+Cdig/LOgHO5Mk4wdyll6lSv6uaffW+qWNveWk8d1aXEazQzwsGSRGAKspHBBBBBHUGvw6r75/4J9/H3+1dNk+Get3WbyzVp9FkmcZlhHzSW4zyWTlwOTtLdFQVRLPteiiimIKKKKACiiigAooooAKKKKACiiigAooooAbQK5rx98RPDfwv8Py634p1i30bTI22+dcMcu2CwRFALOxCkhVBJwcDivgn4zf8FKNc1mSaw+G+mLoVlyP7W1NFlun+7gpFzHHjDD5vMyCD8pFZzqRhuexl+U4vMpWoR06t6JfM/Q7VNWsdEsJ73Ub23sbKBS8tzdSrHHGo6lmJAAHqTXj/in9tD4N+E5mgufHFneTAZA0uOW9U8ZwHiVkz9TX5L+L/H3iT4gakb7xJruoa3c5YrJfXDS7ASSVUE4Vck4VQAOwrArmlif5UffYbgumlfE1W32S/Vn6X6p/wU4+HdusosPDviS9lU4TzIreKN/fPmlgPqua4+7/AOCqECsRa/DiSVexm1kJ+ggb+dfAFFYuvN9T3afCmWQ+KDl6t/pY+82/4Ko3Pb4axD662f8A5HoX/gqhc9/hpCfprbD/ANt6+DKKXtp9zo/1Zyr/AJ9fi/8AM+/bX/gqhGzAXPw2eNf70WtB/wBDAP5112l/8FPPh/PCn9o+GfEdnOThlgjgmRffcZVJ/wC+a/NSimq811Oepwplk/hg4+jf63P2A8Lfts/BrxVcRW8PjS3sLiQA7NUhltVTPZpJFCD/AL6r2TRtd07xDpsGo6XqFrqWn3C7obqzmWWORfVWUkEe4Nfg3W54S8ceIvAOpC/8Oa3f6HecbprG4aIuAc7WwQGXPVWyD3FaRxH8yPDxPBdJq+GqtPs/80fuxx0o4r87fgZ/wUk1bTrqDS/ibZrqdkxVP7c0+IJPFknLSxDCuvK8oFKhT8rkgV98eE/Fmj+ONBs9c0DUYNV0q8TzILq3fcjjJB9wQQQQcEEEEAgiuyE1PY/P8wyrFZbPlxEdHs1qn8/6ZuUUUVZ5A31rhtY+N/w88Papcabqnjrw5p2oW7bJ7W61a3jlib0ZWcEH2IruWr8Zf2sv+TjviB/2E3/ktZVKns1c+iyPKY5tXlSlLlsr/ifqv/w0R8LP+ij+E/8Awd23/wAXR/w0R8LP+ij+E/8Awd23/wAXX4nUVzfWX2Ptv9SaX/P5/cftj/w0R8LP+ij+E/8Awd23/wAXR/w0R8LP+ij+E/8Awd23/wAXX4nUUfWX2D/Uml/z+f3H7Zf8NEfCz/oo/hP/AMHdt/8AF10HhPx94a8eQ3EvhrxBpevxW7BJpNLvI7lY2IyAxRjgnBxn0r8La/RD/glt/wAin47/AOv63/8ARbVpTrc8uWx4+bcMU8twksTGpzNW0t3dj7mooorqPz8KTpzS02T/AFbfQ0DPPf8Ahoj4Wf8ARR/Cf/g7tv8A4uk/4aI+Fn/RR/Cf/g7tv/i6/E6iuH6y+x+rR4KpNJ+2f3H7Y/8ADRHws/6KP4T/APB3bf8AxdH/AA0R8LP+ij+E/wDwd23/AMXX4nUUfWX2H/qTS/5/P7j9sf8Ahoj4Wf8ARR/Cf/g7tv8A4uj/AIaI+Fn/AEUfwn/4O7b/AOLr8TqKPrL7B/qTS/5/P7j94fD3iPS/FekwaroupWmr6ZPu8q8sZ1nhkwxVtrqSDggg4PBBHatP09a+ff2CuP2VvBv+9e/+ls9fQVdsXzJM/McXR+rYipQTvytr7mOoopOlM5RpwOtL0HNeB/H/APbJ8EfAnztOklbxF4oUDGi2LjMWVJBmkwREOBxgv8ykKQcj4F+LH7bnxQ+KMk0MesN4X0h3ylhobNC2MnAaYHzGyDgjKqcZ2jpWM60Yb7n02XcPY3MUpxjyxfV/p3P1F8cfGDwV8Nlx4n8U6Vosvl+atvdXSLM65xlY8725/ug14f4p/wCCi/wh8PvGthcav4k3EhjptgUCY9fPaLP/AAHNfldJI80jSSOzyMxYsxyWJ5JJPU02uV4h/ZR91h+DMNFfvqjk/KyX6n6Gax/wVK0eGZxpXgG+vIR91rzUUt2P1Co4H5msZv8Agqhcn7vw2jUf7Wtk/wDtuK+DKKz9vPuexHhfK4r+Hf5v/M+9E/4KoXP8Xw1jYf7OuEf+25rY0n/gqVpE0yDVPAN9ZxH7zWmopOw+gaNAfzFfnnRR7efcJcL5XL/l3b5v/M/U/wAL/wDBRv4R67M6X8mteHFXG2TULDer+w8hpT+YFe1eBfjl4A+JTxx+GvFuk6tdSIZFs47lVudoxkmFsOAMjkr3r8RqUEqwIJBFaLEPqjyK/BuEmv3NRxfya/Q/fPI7c/SjOa/HX4W/th/FL4UNHFZeIZNZ0xMf8S3XN11CMLtAViwkjAHRUYL6g197fAP9uTwR8ZrqDSL9T4S8TSlUisb6YPDcszEBYZsKGY/L8rBWJbChsEjphWjLTZnw+Y8OY3L06lueC6rp6o+lqKQEEZHSlrc+WOS8UfFTwb4HvorPxH4s0XQbuSPzUt9S1CG3dkJIDBXYEjIIyOMg1kf8NE/C3/oo/hP/AMHdt/8AF18G/wDBTfH/AAuzw9j/AKAEf/pRPXx/XLOtyScbH6LlvCtPHYSGJdVpy6WP2xP7RHwtHT4j+Ez/ANxu2/8Ai6/Jv9pjWLHX/j1431HTL231GwuNRd4bq1kWWKVSBgqwJBHuDXmVFc1St7RWsfY5Rw/DKarqxqOTatsFFFFc59aFFFFABX3n/wAE5/iZ4R8C+CvF1v4k8UaNoE9xqEbxR6lfxW7yKIgCQHYEgHjIr4MorSnLklzHk5pl8cyw0sNKXLe2vo7n7Y/8NEfCz/oo/hP/AMHdt/8AF0f8NEfCz/oo/hP/AMHdt/8AF1+J1FdH1l9j4r/Uml/z+f3H7e6J8avh/wCJtVt9M0jxv4d1TUrgkQ2lnqsEsshAJIVFckkAE8DoDXbjtX47/sWf8nPeA/8Ar5m/9J5a/YjpXVTqe0Vz4nPMqjlOIjRjLmuriNxXnn/DRHwtH/NR/Cf/AIO7b/4uvQ5P9W30NfgZU1Kns7eZ05Fksc4dTmny8tvxv/kftj/w0R8LP+ij+E//AAd23/xdH/DRHws/6KP4T/8AB3bf/F1+J1FYfWX2Prf9SaX/AD+f3H7Y/wDDRHws/wCij+E//B3bf/F0f8NEfCz/AKKP4T/8Hdt/8XX4nUUfWX2D/Uml/wA/n9x+2X/DRHwt/wCikeE//B3bf/F11+geItM8WaTBqmh6naavplwW8m8sJlmhk2sVbDqSDhlIODwQR1Ffg9X65/sG/L+yr4LPvff+ls9bU63tHax87nnD0Mpw8a0anNd2tbyb/Q+gvSqWpala6Pp9zf31zDZ2VrE009zcSBI4o1BLMzEgKAASSTgAHNXa87/aIOPgH8SP+xc1H/0mkroPjaUfaVFDuw/4aI+Fn/RR/Cf/AIO7b/4uj/hoj4Wf9FH8J/8Ag7tv/i6/E6iuH6y+x+prgqk1f2z+4/bH/hoj4Wf9FH8J/wDg7tv/AIuj/hoj4Wf9FH8J/wDg7tv/AIuvxOoo+svsP/Uml/z+f3H7Y/8ADRXwt/6KP4T/APB3bf8AxdTaf8efhtql5b2dl8QPDN3d3EixQ28Os27vI7EBVVQ5JYkgADkk1+JFdp8Ef+SzeAv+xg0//wBKUprENvYxrcG0qdOVRVnom9ux+4C9OKOar3F1DaWrzzyLFDGm95JGAVQBkkk8AAc818JftJf8FEDY3V34d+FjRyyRP5cviaZQ8fGdwtoyCGwcDzGBU4OFYEPXXKairs+AwGXYjMavssPG/d9F6n2h42+I3hj4caaNQ8T67YaFatuCPfTrGZCBkqik5dsDOFBPtXzv4u/4KQfCvw/O0OlR6z4mbZuE1jZiKHd/dYzMjD6hSK/MvxD4k1fxdqs2p63qd5q+oy433V9O00jAcAFmJOAOAO1ZlcUsQ/so/S8Jwbh4RTxM3J+Wi/zPvy7/AOCqCrIRa/DcunZptaCn8hAf51XT/gqhcK3zfDWNh6LrZB/9JzXwXRWXt59z21wxlSX8L8Zf5n6P+GP+CoHhC941/wAIazpTEgBrGWK7QZPJJYxEAewJ9q+ivhv+0d8N/i1Mtv4Y8WWN7fNnFjKWt7k4GTtikCuwAzkgED1r8VqdHI8bq6MyOpDKynBBHQg1pHESXxanmYrg/BVY/uG4P71/n+J++Sn05pa/Lj9nr9vvxV8MpodJ8atdeMfDWMCWRw2oW2WzuWRj+9XBYbXOegDALg/pV4O8Y6N8QPDlhr/h7UYdU0i8TzILmHO1hnBBBwVYEEFSAQQQQCCK7IVI1Nj8zzLKMTlc+Wsrp7NbM3qKKK0PFCivib4m/tLftF/CPR49X8UeBPCulaVNdi0iuCWm3yFWZV2x3jMMqjHJAHHuK77w38WfjzYeGfF+v+OfBnh7RdJ03w5d6pp9xayCTzrqNVeJHVbp22Mu8nhTwPmB4IOx9N0V8sfsi/tZa38evEmvaH4lstLsb61tUvLIaXDIiuivtm3l5HyQXhwBjq2e1cv8cv23PEngH43XXg3w3puh3mm2Utvaz3V6kssjTMFaTaUlVQF3bdpBIZGyecACx9n0UUUCGUvfFJz2rzT48fHjw/8AAPwbLrmtyedcSbo7DTY2Alu5QM7V64UdSxGFHqSARtJXZrRo1K81Tpq7eyNH4u/GPwz8E/CU+v8Aie+FtAuVt7aP5prqTGRHGufmY+pwB1JABNflF+0D+0x4r/aE1vzdWl/s/QreUvY6JbuTDD1AZjgeZJtJBcgdW2hQSK5v4wfGPxL8bvF1x4g8S3hllbK29rGSIbWPPEcSknA9T1Y8kk81w9ebUrOWi2P2rI+HaWXRVataVR/cvT/MKKKK5j7QKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigD279m39qjxN+z1rXlws+r+FblwbzRZZMKD/wA9Yic7JPXHDDAIOFZf1V+FvxU8O/GLwfa+JPDN8Lywn+V0biW3kABaKRc/K4yMjoQQQSCCfw8r0r4D/HrxH+z/AOMU1rQ5fPsptqahpcrkQ3sQOdrcHay5JVwMqSeqsyt1UqzjpLY+Hz3h2nj4uvh0o1Pwf/B8z9qf1o5P0rifhF8WvD3xq8F2fibw5dedaS/JLC+BLbTAAtFKv8LLkexBBBIIJ7f+dejvsfjFSnOlN05qzW6HUUUUGZ5x8c/gponx18E3Gg6t/o9yuZbDUUTc9pPjAcDI3KejLkbh3BAI/JXx54H1j4b+LtS8N67bG11OwlMci8lWHVXUkDcrKQynuCK/bGvnD9sv9nIfGXwb/bejW6nxfosTNAEjy97AMs1uSOSwOWTryWXA3lghn5fUUEFSQQQR1FFSUFFFFABRRRQAUUUUAFa/hDxVqPgfxRpfiDSJ/s+pabcJcwvzjcpztYAjKkZDDupIPWsiigD9qPhr470/4neA9D8U6bxaanbLMI924xPyrxk92VlZT7qa6ivhj/gm78TmkXxH4Au5CwQf2tYZB4GVjnTJPAyYmVQO8hNfc9WQFFFFABRRRQAUUUUAFFFFABRRRQA2uD+NPxe0P4H+Ab3xRrkn7qH91b2qMBJdTEHbEme5wST2CsTwDXdsQoye1fkd+2t8dJfjL8Xry1s7gSeGvD7yWGnqhDLIwOJpwQSDvZcBgcFFTgHOcqlT2cb9T6HI8reaYpU3pBat+X/BPPvjR8cPE/x28VSa14juyyIWFnp8TEQWcZI+WNSepwNzHlsDJ4AHn1FFeU25O7P3ujRp4eEaVKKjFbJBRRRSNwooooAKKKKACiiigAooooAK9w/ZZ/ab1f8AZ78XIJHkvfCF/Ko1PTgc7f4fPiz92RR24DhcHHysvh9FXGTi7o48VhaWMoyo1ldP+vvP3n0nVLPXNLtNSsLiO8sbuJZ7e4hYMkkbAMrKRwQQQQfQ1davj3/gm18UpvFfwv1TwheyM9z4anU27N3tptzKuc5JV1l9gpQdq+wq9WEuZJn874/BywOKnh5fZf4dH9wHtX4y/tZf8nH/ABA/7Cj/AMlr9mzX4yftZf8AJx/xA/7Cj/yWufEfCj7Lgz/fKn+H9UeS0UUV55+xBRRRQAV+iP8AwS1/5FPx3/1/W/8A6Levzur9Ef8Aglr/AMin47/6/rf/ANFvXRR+NHyPFX/Iqqeq/NH3LRRRXpn4UFNk/wBW30NOpsn+rb6Gga3PwLooorxT+n4fCgooopFhRRRQB+uX7Bf/ACar4M/3r3/0tnr6Dr58/YL/AOTVfBn+9e/+ls9fQdevD4Ufzhmn+/V/8UvzG9MnPFfD/wC2t+2pJ4Vnvvh/4AvdmtLmHVdbt25suoaCE4/1vZnB+TkD58lPbv2wfji/wN+D95fafKE8Ram/2DTOhMcjAlpSD2RQxBwRuKAjBr8gZppLiZ5ZXaWWRizO7EszE5JJPJJPesa1Rx0ifXcL5JDGP63iFeCdku78/JBNNJcTPLK7SyyMWZ3YszMTkkk8kk96ZRRXnH7BtogooooGFFFFAgooooDcKKKKBhRRRQLfc+8/2LP21L6fVdP+H3j6+e8W5ZbfStauGzIsh4WGZicsGOFVuoJAOQQR+gI56V+BdfrV+xF8dpfjR8JUg1S487xLoDrY3zsxZ5k25hnbOTlgpUknlo3PGQK9CjV5vdZ+R8U5LDDf7bh1aLeqWyfc+Vv+CnH/ACWzw9/2AI//AEonr4+r7B/4Kcf8ls8Pf9gCP/0onr4+rmrfGz7rh3/kWUfT9WFFFFYH0YUUUUAFFFFABRRRQAUUUUAe2fsWf8nPeA/+vmb/ANJ5a/Yivx3/AGLP+TnvAf8A18zf+k8tfsRXo4f4X6n43xn/AL9D/D+rEk/1bfSvwMr985P9W3+7X4GVGI+yehwT8WI/7d/UKKKK4T9UCiiigAr9df2C/wDk1TwV9b7/ANLZ6/Iqv11/YL/5NU8FfW+/9LZ66sP8T9D4DjP/AHGn/j/Rn0B3rzz9on/kgfxI/wCxc1H/ANJpK9D7155+0T/yQP4kf9i5qP8A6TSV39GfkeH/AI0PVH4m0UUV45/TMdkFFFFIoK7T4Jtt+MvgM+mv2B/8mUri6kt7iW0uI54JHhmjYOkkbFWVgchgRyCDyCKadmY1aftKcqfdNfefY/7c37W0vjXVbr4e+D71k8OWbGLU72EkfbpgcNEpHWJTwT0Yg4yAC3xpRRVSk5yuzjy/AUstoRoUVtu+rfdhRRRUHpBRRRQAUUUUAFe9fsl/tNaj8AfGkVveXEk3gvU5VGpWjBnEJPyi4iAyQ6jG4AHcowQSFZfBaKuMnF8yOPF4WljaMqFaN0/6v8j96rC+t9Usbe7tJ47m1uI1limhcMkiEAhlYcEEHII4Oatfdr5B/wCCcvxil8afDG98HajOZdQ8Muq27SNlns5NxQckk7GDrwAFXyhX19zxXrRlzRTP53x2DngcTPDz3i/w6Hyl/wAFIv8Akhuh/wDYxwf+kt1Xr3xg/wCTafF//YrXX/pK1aPxm+C+g/HLwva6B4ilvYrK3vFvkawlEb+YqOgySrDGJG4x1xXQ+IfB9l4m8F6j4YvGmXTb6xfTpWicCQRMhQlSQQGweuOvaqOA/OzwRdP8EvDvwH+L0MMraZL/AGhpOsJCvDILy5wThgWZo5HKg8A2657Vh+IvDd63wm8L+PtYVDrPjXxlNqEsiZG6NSyrlT0/eNOw6/K6194Xn7MPgzUPgvY/DG4+3y+H7Gc3FvO0y/ao5DM8pYPs25zI6/d+6xHXmpvGX7NvhHxx4Q8IeGr19Qg03wv5X2H7LMqOfLRUG8lCGyFBOAMkk0rDuer9aMCgdKparqlpoum3WoX1xFZ2VrE089xcOEjijVSzMzHhQACSTwAKYJNuyOZ+LHxV0D4MeC73xN4ju/IsbcbY4Y8NNcynO2KJSRudsHAyAACSQoJH49/Gz4za98dPHV34k12TZu/dWljGxMVpCCSsa569clsZYknjOB2f7V37SF9+0F46aSAtb+FdMZ4dLs8kFlzgzuD/ABvgHH8IAHJDFvDq86tU5nyrY/a+HMjjgKX1iuv3kl9y/wA+4UUUVyn24UUUUAFFFFABRRRQAUUUUAFFFFABRRXpfwj/AGc/H/xuuFHhjQpZdP37JNVuv3NpGQQDmQjDFcglUBbBztqknLRHNWxFLDwdStJRS6t2PNKVVLMAASTwAO9fo18Lf+CZvhvSFtrzx1rtx4gulCtJpunZtrUHb8yF/wDWOMnhlMZ4GR2r6j8B/BfwN8L41HhfwtpmjyiPymuYIF+0Omc7WlOXYZAPzE9K6Y4eT+LQ+KxfGGEotxw8XN/cv8/wPyI8J/s4/E/xxcQxaR4F1uZZlLx3FxaNbW7KO/my7Y/15r0/Qf8Agnl8ZNY/4+tM0zQ/+v8A1FG/H9z5lfq9gL0AFArZYeC3Pl63GWOn/DhGK+b/AF/Q/MRf+CZPxR7654UH/b3cn/23p3/Dsn4of9Bzwr/4FXP/AMj1+nXNHPrVewh2OH/WrM/519yPy31D/gmv8WLOEvFeeG79v+edvfShj/33Co/WvPfE37Gfxl8K2ct1deB7y6gjYLnTZYbx2z0IiidpCPfbx3r9ieaO1H1eDOmnxfmEPjUZfL/Jn4O6/wCGdY8KXv2LW9KvtHux/wAu+oWzwSfkwB/Ss2v3k1rQNN8R6bPp2q6fa6lp9wu2a1vIVlikXOcMrAgjIHBFfPvxM/YF+FXj5ZJrDTJfCOoM28XGivsjJ2kBTCwaMLkgkIFJx1FYyw7+yz6LC8Z0ZPlxNNx807/5fqfk7RX038Yf2AfiN8NRPe6JGvjbRo+fN02Nlu1GF5a3JJPzEgCNn4GTt6D5mkjeGRo5EZHVirKwwVI6gjsa5pRlHSSPu8JjsPjoc+Hmn+nqtxtFFFZnceo/s8/H7Xf2ffHUOtaY7XGl3BWLU9LLYS8hBOOvR13FlYcgkjkMwP7BeBPG2j/EbwnpniPQrxL7S9QiE0MqkZHYqwHRlIKlTyCpB5FfhZX0r+xT+0y/wT8aDQtbuG/4QzWplW43N8tlOcKtwAeAvAV+nAB5KBT10avK+WWx8FxLkaxlN4qgv3kVr5pfqfrDRTEYSKGU5B5BFPr0D8ZCiiigD84P28/gCPA3iwePNFt9mha5MVvY0xi3vSCxOOoWQBm74YPnAKivk6v2s+IHgfTPiV4M1fwzq8Zk0/U4DBJtA3IeCrrkEBlYKykjgqK/HP4geB9S+GvjTWPDOsR+XqGmXDQybQQrjgq65AJVlKsCRyGBqWUjn6KKKQwooooAKKKKACiiigD0r9mzxk/gL47eC9WDqkX9oR2s7SH5RFNmGRj9FdmGe6g9q/YavwvVirAgkEcgjtX7nq2QDjFUiWLRRRTEFFFFABRRRQAUUUUAFFFFAHmH7Sfj+T4Y/Azxl4igeSK8t7ForWSIDdHPKRFE/PHyvIpPsDX4sV+of/BSjWrjTP2f7W1hOItR1u2tpvdBHNKP/Holr8vK8/EN81j9h4OpQp4SdVvWT/BBRRRXKfoHNHuFFFFAc0e5Z03TbvWNQt7CwtZr29uZBDBa28bPJK5OFVVAJLEkAADJzX238J/+CZmo6rYwX/xB8QHRnk+Y6RpAWWZFIBAadsoGB3AqquOAQx6CD/gmT8NbLWPFfibxpewebPo8cdlp7OoKpJMGMrqSMhgiqoIP3ZWB61+iy/N9K7aNJOPMz8v4i4ixGHxDwmEfLbd7u/kfKFh/wTY+FNpGyzXPiG8LdHmvYwR9NkSj8xXNeLP+CYPg+7s3/wCEc8V6zpd7nKtqIiuovptVYyPruOPQ19q9KDjrXT7KHY+KhnmZU5cyrP56/mfiX8ZvgZ4s+BPiSPSPFNmkZnQyWl9auZLe6UHDFHIByDjKkBhlSVAZSfP6/Wz9vLwXaeLf2cfEV1NAsl7o7RajaSk48tlcK/1zG8gx0yQeoFfknXnVYezlZH7FkGaSzTCe0qK0ouzts9tQooorE+lCiiigD6i/4Jz+Kf7B/aJi04h2TWtMuLQKrYUMgWcMR3IWFlH+8a/VI1+PX7FN4bH9qDwJKD1nnj/77tpV/rX7C16WHd4n4rxhTUMwUl1iv1D0r8Zf2sv+Tj/iB/2FH/ktfs2a/GT9rL/k4/4gf9hR/wCS1OI+FHRwZ/vlT/D+qPJaKKK88/YgooooAK/RH/glr/yKfjv/AK/rf/0W9fndX6I/8Etf+RT8d/8AX9b/APot66KPxo+R4q/5FVT1X5o+5aKKK9M/Cgpsn+rb6GnU2T/Vt9DQNbn4F0UUV4p/T8PhQUUUUiwooooA/XL9gv8A5NV8Gf717/6Wz19B18+fsF/8mq+DP969/wDS2evoOvXh8KP5wzT/AH6v/il+Z+YH/BSbx2/iD42WHhyOffaeH9OUNDgfu7ibEj84zzGLf/vn3NfJNe0ftlar/bP7Tfj24IClbyO3/wC/UMcX8krxevMqPmm2fu2TUY0Mvowivsp/N6sKKKKzPZCiiigD69/Yz/YxsvjJpbeNPGjXC+GFmMVlp9u5ja/ZGxIzOORGCGT5SGYhuV2/N916P+zb8K9DsY7e1+H3h3y41Cq9xpsU0hHvI6lmPuSa4r9hbxFpOu/s1+FbfTHjWTThNaXluhG6KYSszbgOhYMHHs4r6AGceterTjFRTsfgWdZli62NqQnNpJtJXaSS20PMte/Zl+FPiWwks734f6AI5BgvaWMdtKP92WIK6/gRXwt+1Z+wndfCjTbrxb4IkudW8MQlpL2wmw9zYR/3wwx5kS85ONyjBO4BmX9N19ahnhS5heORFdGBVlYZBB4II7iqnTjJbHNl+c4vL6qnGbceqbun/Xc/BGiva/i9+zL448M/FDxRpuheBPEV9ocOoTfYJ7HS7m4iNuzFowsgUhsKwBOTyDXIf8KE+J3/AETrxb/4I7r/AOIrzHCS0sfudPMsJUhGaqR1Se6/zODorvP+FCfE7/onXi3/AMEd1/8AEUf8KE+J3/ROvFv/AII7r/4ijll2Nfr2F/5+x+9HB19O/wDBPDx1N4V/aEtdILN9k8QWc1m679qLIimZHIPVv3TKP+uhrx7/AIUH8Tv+ideLf/BHdf8AxFdz8Cfg/wDEjw78afAmpz+AvFFna22uWbz3E2j3KJHF5yh2ZigCqFLEknAGc1dOMoyTseXmmIwmJwVWl7SOqfVb2069z2r/AIKMfD3xV4t+MGhXWieGtX1m1j0SOJ5rCxlnRX8+Y4LIpAbBBx1wRXyp/wAKU+In/Qh+Jv8AwT3H/wARX7f7QwBI5pBGO4B/CuuVFTk5XPzbA8VVsDh4YaNNNLrc/ED/AIUr8Q/+hD8Tf+Ce4/8AiK5bUtMvNFv57LULWexvYW2S21zE0ckZH8LKwBB9iK/ejaGHKivxl/au4/aM+IA/6ikn8hXPUoqmr3PtMj4gq5tXlSnBKyvp6o8nooorlPtwooooAK3vDvgPxL4uhmm0Lw7q2tQwsElk06yluFRiMhWKKQDjsawa/Rf/AIJdqG8A+NMjONTi/wDRVa0488uU8TOMfLLMI8TCN2raPzdj4c/4Up8RP+hD8Tf+Ce4/+Io/4Up8RP8AoQ/E3/gnuP8A4iv3A2D0H5UbB6D8q6vq67n5/wD66V/+fK+8/KD9kP4WeNdB/aO8E3+peD9e06yguJmlurvTJoo0BgkALMUAHJA5PcV+r4zTdo3Zx+NOxXRTh7NWPks2zSebVlWnFRaVtBJP9W30r8DK/fOT/Vt/u1+Blc2I+yfacE/FiP8At39QooorhP1QKKKKACv11/YL/wCTVPBX1vv/AEtnr8iq/XX9gv8A5NU8FfW+/wDS2eurD/E/Q+A4z/3Gn/j/AEZ9Ad688/aJ/wCSB/Ej/sXNR/8ASaSvQ+9eeftE/wDJA/iR/wBi5qP/AKTSV39GfkeH/jQ9UfibRRRXjn9Mx2QUUUUigooooAKKK7P4c/Bvxr8XLx7bwj4cvNaaM4kmiUJDG2MhXlcrGpI6AkE9s00m9EY1KtOjFzqyUUurdkcZRX1BZ/8ABOj4v3Vn50kGi2cuM/Z5r8mT6ZVGX/x6vMvid+zD8S/hDYtf+JPC9xDpannULR0uYEGVALtGzeWCSAN4GScDNaeznHVo8+lm2ArT5KdZN9rrX0PLKKKKyPWCiiigAooooA+h/wBgnxmfCP7SWgwPLHDa6zBPpkzSHA+ZPMjA/wBppIo1H+9X63V+HvwVvhpfxk8CXjfdg16wlb6C4Qn+VfuAp+QfSvQw7vGx+N8ZUVDGQqr7S/IfRSUtdZ8AFFFFADPrXwH/AMFFf2jWZv8AhVWgXOAAk+vTIOvR4rcN+Ttgf3Bn7wr6v/aJ+Mln8C/hXq3iWcxyXqr9n062k6T3Tg+WuMjIGCzYOdqMRyK/GXV9WvNe1a91LUbiS7v7yZ7i4uJTlpZHYszE9yWJJ+tctepyrlXU/QOFMpWJrPGVV7sdvN/8Ap0UUV5x+xhRRRQAUUUUAFFFFABRRRQAUUUUAFa3hbwrq/jbxBZaJoOnT6rq14+yC1t0yzHGSfQKACSxwFAJJABNanwx+GfiD4veMbLwz4aszd6jcnJZiVigjGN0srYO1FB5OCTkAAsVU/rR+zz+zR4Y/Z78OrDp0a3+vXCAX+tTIBLOepVRzsjB6KD2BJYjNb0qTqPyPls6z2llUOVa1Hsv1Z4X+zt/wTx0fwzHaa78SRHrur4WRNEQ5s7Zs7gJCP8AXMMAEf6vlhhxhq+y9P0+30uzgtLSCO2tYEWOKGFAiRqBgKoHAAAAAHSrfPpR716UYqKsj8VxuYYnMKntK8r+XReiFpaKKo88KKKKACiiigAooooAKKKKAG8HrXhnx6/ZF8D/AB3gnu7u1/sbxMyny9bsEAlLBdq+cvAmUYUYbBwuAy17n60dqTSaszow+IrYWoqlGTi12PxW+OP7Pviz4BeIhp3iK032cxJs9Ut8m2ulHXaxGQw/iVsEcHlSpPmlfur428D6H8RvDd5oHiLTYdU0q7QpJBMM/RgRyrA8hgQQQCCDX5PftS/st6x+zv4kEsZm1PwffSldP1VlGUJy32ebAAWQAEggAOASACGVfPqUXH3o7H7FkXEcMwth8RaNT8H/AJM8LooorlPuD9LP+Cev7RB8ceFW+HuuXIbW9DhDafI4O64shhQpPQtESq9soyYBwxr7Ir8Lvh3481T4Y+ONG8UaNJ5eo6ZcCdBuIEg6NG2OdrKWUjuGNftb8O/HOm/ErwTovijSXZtP1S2S4iD7d6ZHzI+0kBlOVIBOCpGa9OjU5o2e6PxPijKlgcT7ekvcn+D6/fudNRRRXQfEhXDeMvgn4E+IWqLqfiPwtpur6gIxF9puIcybRnClhgkDJxnpXc0UAeVf8Mr/AAl/6EPSP+/R/wAaP+GV/hL/ANCHpH/fo/416rRQB5V/wyv8Jf8AoQ9I/wC/R/xo/wCGV/hL/wBCHpH/AH6P+NeqUtAHlX/DK/wl/wChD0j/AL9H/Gj/AIZX+Ev/AEIekf8Afo/416rRQB5V/wAMr/CX/oQ9I/79H/Gj/hlf4S/9CHpH/fo/416rRQB5npP7N/ww0HUrfULLwLosV3bsHikNsH2MOQQGyMg8g4yCARzXplFFABRRRQAUUUUAFFFFABRRRQAUUUUAU7/TbTVIRFeWsN1Gp3BJow655GcEEZwT+dU/+ER0P/oD6f8A+Aqf4Vrj3ooKU5R0TMf/AIRDQ/8AoDWH/gMn+FH/AAiGh/8AQGsP/AZP8K2MCkwKCvaVP5mZH/CIaH/0BrD/AMBU/wAKP+ER0P8A6A1gP+3ZP8K1i23v+tYXibx34d8E28dz4g1/TNDt5G2pLqV5HbqzegLsAT7CkVGdWTtFtv5mnY6XZ6XGyWVpDaKxyVhjCAn1IA5q2OOteK+IP2yvgz4am8q68d6fO/8A1D45bxf++oUYfrXnGv8A/BSn4V6TfSQWNn4g1uNR8t1aWUccTn0/eyI4/Fanniup308rx9fWNGT87M+sN2felbOBXwPrn/BUyNfNTR/h6zggiOa91QLg9iUWI5HsGH1rxjxn/wAFBvi74stTBaX2neGYmVkdtHtMOwOR9+VpCpHZlII7VnKtBeZ7NDhXM6z96CivNr9Ln1X/AMFC/jJpHhX4R3fgmK7jk8R+IDEFtY3+eG2WUO0rgdFJTYM43bmxna2Py/q3q2q32u6jcX+pXlxqN9cOZJrq6laWWVj1ZmJLEn1JqpXBUn7SVz9YybK45ThvYqV23dvz8gooorI90KKKKAPXP2S5DH+0h4AI/wCgkq/mrD+tfsx61+Mf7KP/ACcb8P8A/sKR/wBa/Zz1r0MP8LPx3jP/AHyn/h/Vimvxk/ay/wCTj/iB/wBhR/5LX7Nmvxk/ay/5OP8AiB/2FH/ktGI+FBwZ/vlT/D+qPJaKKK88/YgooooAK/RH/glr/wAin47/AOv63/8ARb1+d1foj/wS1/5FPx3/ANf1v/6Leuij8aPkeKv+RVU9V+aPuWiiivTPwoKbJ/q2+hp1Nk/1bfQ0DW5+BdFFFeKf0/D4UFFFFIsKKKKAP1y/YL/5NV8Gf717/wCls9fQdfPn7Bf/ACar4M/3r3/0tnr6Dr14fCj+cM0/36v/AIpfmfj3+2xpaaR+1B45hjDBHngnyR1MltFI3/jzMPwrw6vtr/gpx8N59P8AGvhzxxBHmx1G1/s25ZU4WeNmdCzerIxAHpCa+Ja82rG02j9yyPERxGXUZReySfqtAooorI90KKKKAOv+Gvxa8W/CHWm1TwlrdxpFy4AlSPDRTAZwJI2BVwNxxkHGSRg819d+Bf8AgqFqUCxQ+MPBlvdkv+8vNGuTDtX2hk3ZbH/TQA+1fCtFaxqTjszxsbk+CzB81emubvs/wP1a8K/8FDfg/wCIYib3UdS8Ovu2iLUtPdi3vmDzFA+pFeveFfjp8PPG0sEGh+NdD1K6nXdHaxX8fnke8RbePoQK/Eeit1iH1R8rX4Mwsv4NRp+dmv0P3yyjcgqT9aXaP7tfhp4V+KPjHwMFXw94q1jRow4fybK+lijYjkZUMFI9iCK948F/8FEvix4bkVdWn0zxTbF13rf2awyBQfmVGh2AEjjcytj0NarERe589iODsZT1ozUvwf8Al+J+qe0ego2hv4ePpXyH8Nf+Ck3gDxRJHbeKtPvvB9y2czMPtdoOgA3oA4JyeseBjlq+pPC/izRPGmkxapoOq2es6dMSEurGdZo2IOCNykjIPBHUGt4zUtmfIYrL8XgpcuIpuP5ffsbW0ego2j0FLRVnnhRRRQA30r8Y/wBq/wD5ON+IH/YUk/kK/Zz0r8Y/2r/+TjfiB/2FJP5CuTEfCj9B4M/3yp/h/VHk9FFFeefsQUUUUAFfox/wS5/5EHxp/wBhKL/0VX5z1+jH/BLn/kQfGn/YSi/9FV0UfjR8hxV/yK5+q/NH29RRRXpn4WFFFFADJP8AVt/u1+BlfvnJ/q2/3a/AyuLEfZP0/gn4sR/27+oUUUVwn6oFFFFABX66/sF/8mqeCvrff+ls9fkVX66/sF/8mqeCvrff+ls9dWH+J+h8Bxn/ALjT/wAf6M+gO9eeftE/8kD+JH/Yuaj/AOk0leh9688/aJ/5IH8SP+xc1H/0mkrv6M/I8P8AxoeqPxNooorxz+mY7IKKKKRQUUUUAe1/sn/s9T/tCfEcWNw0lv4b01VudVuowclCxCwqezyEEAnoFcjJGD+uHhTwrpXgnQbLRNDsINM0qzTy4La3TaqDqfqSSSSckkkkkkmvnj/gnh4Fh8Lfs92mr7f9M8QXc15KzJhlVHMMa56lcRFx/wBdDX0/Xp0YKMfNn4RxJmVTG42dO/uQdkvTd/ePqtdWsV9by29xEk8EqsjxyKGV1IwQQeoIOMGrNFdB8psfkP8AtpfAi3+B3xaZNJheHw1rURvrBSuEhbcRLArYwQpwwHULIgOTyfAa/SD/AIKgeHoLn4Z+EdcZM3Vnq7WaN6JNC7v+ZgT8q/N+vLrR5Zux+/cO4ueMy+nObvJaP5f8CwUUUVgfSBRRRQB0Xw54+IXhf/sKWv8A6OSv3Sj+4PpX4W/Dn/koXhj/ALClr/6OSv3Sj+4PpXfh9mfk3Gv8Wh6P9B1FFFdh+ahRRRQB+WH/AAUE+NDfET4tHwtYXHmaJ4X3Wx2HKy3bY84np90gR4OcFHIODXyxX6P/ABO/4Jt2vj3x/r/iSw8eTaSmrXkt9JaT6WLkxySMXkw4lTK7mOAVyBwSetcwP+CVrn/mpw/8EP8A90159SlUnJyP2XLM+yjBYSnQU7WWuj367LufA9FffP8Aw6rf/opw/wDBD/8AdNH/AA6rf/opw/8ABD/901HsJ9j0/wDWjKv+fv4S/wAj4Gor75/4dVv/ANFOH/gh/wDumj/h1W//AEU4f+CH/wC6aPYT7B/rRlX/AD9/CX+R8DUV98/8Oq3/AOinD/wQ/wD3TR/w6rf/AKKcP/BD/wDdNHsJ9g/1oyr/AJ+/hL/I+BqK++f+HVb/APRTh/4If/umj/h1W/8A0U4f+CH/AO6aPYT7B/rRlX/P38Jf5HwNRX3z/wAOq3/6KcP/AAQ//dNH/Dqt/wDopw/8EP8A900ewn2D/WjKv+fv4S/yPgap7GxudUvrezs7eS6u7iRYYYIVLPI7EKqqo5ZiSAAOpNfeP/Dqxv8Aopw/8EP/AN016F8Bf+Cfum/B34j2XizVPFC+KmsEZrSzbTBbpHMeBKSZXyVBbAwMEhgcqKaoTb1RhX4qy2FKUqVS8ktFZq7+aPRP2S/2cbX4AfD6NLlEm8Wamqz6rdYB2NjIgQjPyJnGcncdx4BCr7r0pfWj8a9GKUVZH4tiMRUxVWVaq7yk7sWloopnOFFFFADKCwUZJpskgjjLEgKoyfavyU/ae/a28S/GjxXqFlpOp3Wk+CYHe3tNPtZWjF3GDjzp8YLl8AhW4UYAGdzNnUqKmrs9zKcorZtVcKbslu30P1t3qf4h+dLX4U+DfHniL4e6xHqvhvWbzRb5GU+dZysm8A5Cso+V1z1VgVPQgiv0t/Y//bItvjbbp4X8UtDYeOIIyY2QbItTjUZZ4x0EigZZBwQCy/LuCRTrRm7bM9XNeGcTltP20XzxW9lZr5dj6ropKWtz44KKKKACiiigBD7VznjzwRo/xG8Kal4c160W90vUIjFNE35hgf4WUgMGHIIBHSuh/wAil5z7UDjKUJKUXZo/FP4+/A/WPgH8Qrvw7qYNxaNmbT79Rhbq3JOG9mH3WX+Eg4JUqT5vX7RftCfAHQv2gvA8uiaqPsuowEy6bqiLmSzmxjOMjcjAAMhOGGDwwVl/I74pfCXxP8G/FVxoHijTnsruMnyplyYLlO0kL4wynj3B4YKQQPNq0nF3Wx+5ZBnlPMaKp1XapH8fNfqcdX6S/wDBMfxtcax8NfEvhm4kklTRL9J7fe2RHFcKTsUdhvikb6yGvzcVTIwRAWZjhVAySa/VT9gv4G6n8IPhfd6hr9q9hrviGZLmS0kGHt4EUiFHB5D/ADOxU8rvAIBBFPDp85z8XVaMcv8AZzfvNq3y3f3H1BRRRXon4oFFFFABRRSUAN/n60VzHxG+I2g/Cnwje+JfEl4bLSbTb5kixs7FmYKqqqgkkswHA46nABI8O/4eH/Bv/oJ6l/4LZP8ACpclHdndQwGKxUeejTckuqR9NcUYFfMv/Dw/4Of9BPUv/BbLR/w8O+Dn/QT1L/wWyVPtIdzp/sfMP+fEvuZ9NYFGBXzL/wAPDvg5/wBBPUv/AAWyUf8ADw74Of8AQT1L/wAFslHtIdx/2PmH/PiX3M+msCjAr5l/4eHfBz/oJ6l/4LZKP+Hh3wc/6Cepf+C2Sj2kO4f2PmH/AD4l9zPprAowK+Zf+Hh3wc/6Cepf+C2Sj/h4d8HP+gnqX/gtko9pDuH9j5h/z4l9zPprAowK+Zf+Hh3wc/6Cepf+C2Sj/h4d8HP+gnqX/gtko9pDuL+x8w/58S+5n01gUYFfM3/DxD4Of9BPUv8AwWy0f8PEPg5/0FNS/wDBdJR7SPcP7IzD/nxL7mfTHFJ1+lcx8PPiH4f+Kfha18ReGdQXUtJuSyxzBGQ5VipUqwDKQQeCB2PQg11C9PQ1oeVKEqcnCas1uh1FFFBIzPy9aKGYKpYnAr4D/aq/b7mjur/wj8MLpQkeYLvxJHg5boy2vbA5Hm855KdFczOcYK7PTy/Lq+ZVfY0F6vovU+r/AIuftG+AfghasfE+uxQ6gYzJDpVqPOu5eGK4jX7oYqQGcqueCwr45+JX/BTrW7+SS28DeGLbS7YMyi91ljNM6kDBESFVRgc9WkB46V8T3+oXOqX097e3Et5eTu0stxcOzvI5OWZmYkliTkk8mq9cEsRKXw6H6xgeE8FhkpYj95L7l93+Z6j40/af+Kvj6Tdq/jnVtmwxmCxm+xxMuc4aOAKrfVgT05rzCSR5pGkkdndiWZmOSxPUk96bRXO5OW59fRw1HDx5aUFFdkkFFFFSdAUUUUDCiiigAooooAKKKKAPWP2UP+TjPh//ANhWP+tfs5/CPpX4x/sof8nGfD//ALCsf9a/Zz+EfSvQw/ws/HeM/wDfKf8Ah/Vimvxk/ay/5OP+IH/YUf8Aktfs2a/GT9rL/k4/4gf9hR/5LRiPhQcGf75U/wAP6o8looorzz9iCiiigAr9Ef8Aglr/AMin47/6/rf/ANFvX53V+iP/AAS1/wCRU8d/9ftt/wCi3roo/Gj5Hir/AJFVT1X5o+5aKKK9M/Cgpsn+rb6GnU2T/Vt9DQNbn4F0UUV4p/T8PhQUUUUiwooooA/XL9gv/k1XwZ/vXv8A6Wz19B18+fsF/wDJqvgz/evf/S2evoOvXh8KP5wzT/fq/wDil+ZwPxs+Eul/Gz4c6t4U1QiMXSbra78vc1tOvMcqjjkN1AIyCy5wxr8a/iF8P9b+F/jDUvDXiC1NrqVjIUcc7JB/DIjEDKMMMDjkHseK/dDgV5B+0J+zT4X/AGhPD/2bVI/7P1q3RhY6zboDNAeSAwON8eTkoSO+CpOairT51pue3w/njyuo6dXWnL8H3Pxror1H40/s3+OPgRqTReIdLaTS2YLBrNmGks5c9BuwCjcH5WAPykgEYY+XV5jTi7M/a6GIo4qCq0ZKSfYKKKKR0hRRRQAUUUUAFFFFABXT+APiZ4p+F2tLq3hTW7vRb0YDNbv8kqjkCRGysgzzhlIzziuYopp22MqlOFaLhUSae6eqP04/Zh/by0v4pXlj4X8axw6F4qnbyra6hytnfOT8irkkxyHIAUkhiOGywSvrz9a/Auv0m/YP/asuviJa/wDCv/F155/iGyh36bqEz/vL6BRyjZ+9KgGd3JZQSeVZm76Vbm0Z+T8Q8ORwsXi8GvcW67ea8vyPtCiiius/ORvpX4x/tX/8nG/ED/sKSfyFfs56V+Mf7V//ACcb8QP+wpJ/IVyYj4UfoPBn++VP8P6o8nooorzz9iCiiigAr9GP+CXP/Ig+NP8AsJRf+iq/Oev0Y/4Jc/8AIg+NP+wlF/6Kroo/Gj5Dir/kVz9V+aPt6iiivTPwsKKKKAGSf6tv92vwMr985P8AVt/u1+BlcWI+yfp/BPxYj/t39QooorhP1QKKKKACv11/YL/5NU8FfW+/9LZ6/Iqv11/YL/5NU8FfW+/9LZ66sP8AE/Q+A4z/ANxp/wCP9GfQHevPP2if+SB/Ej/sXNR/9JpK9D7155+0T/yQP4kf9i5qP/pNJXf0Z+R4f+ND1R+JtFFFeOf0zHZBRRRSKCiiimJ7H7V/s12qWf7P/wAOkQYDaBYyHHq0CMf1Jr0qvPf2d/8Akgvw4/7FzTv/AEmjr0LtXsLZH8zYpuVebfd/mLRRRVHMfJf/AAUsj3fAGwP9zXbdv/IUw/rX5e1+o/8AwUo/5N9tf+w1b/8AouWvy4rzsR8aP2vg/wD5Fz/xP9AooorlPuAooooA6L4c/wDJQvDH/YUtf/RyV+6Uf3B9K/C34c/8lC8Mf9hS1/8ARyV+6Uf3B9K78Psz8m41/i0PR/oOooorsPzUKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigDP1qyOpaPf2iPsaeCSIP6EqRn8M1+EF9Y3Gm3txZ3cT291byNDNDIu10dSVZWB5BBBBHtX724r8sP+CgfwSk+HPxafxTYwbdC8UM1ySq4WG8GPOUnJ+8SJQTjJdwB8pNcmIjeKl2P0Lg7GRo4ieGn9vb1XT+ux8tVc0bWL3w/qlnqem3Mlnf2cqzwXERw0UisGUg9iCAap0VwH6/KKmuWWx+wn7Kf7Rdn+0J4BS6lEdp4n07bBqtkjcByPllQdfLcAkA9CGXJ2hj7hX4c/Cn4qeIPg340sfE/hy7+z31udskbcxXERILRSjujYGehBCkEFQR+unwB+P/h39oLwZHq+jSC21CAKmo6VI+ZbOUjO08DchwdsgADAHgEMo9OlU51Z7n4hxBkc8uqOtRV6Tf3Ps/0PVKKSlrc+NCiiigAooooAafvVheK/BeheOtN/s/xDo1hrVlvDi31C2SeMMAQGCsCAQCcEcjJre4pOaBxlKLUouzPPfCv7P/w48D6imoaH4L0Wwv423JdR2aGWMn+65BK/gRXoOBjHSl6UGkrLYupVqVnzVJNvz1HUUUUzMKKKKAG85oYhRk8UE4GTXwV+2t+2jbrZ6h8PfAN8J55Q0Gra1A+UjU8GCFgfmY8hmHAGVGWJKxOSgrs9PL8vrZlXVGivV9Eu55T+3h+0hF8XPGcXhTQLtLjwpoMrE3EJJW8u8FWkB6MiAsqkDB3OwLArj5Woory5ScpczP6AwOCp5fh44elsvxfVsKKKKzPQCiiigAooooAKKKKACiiigAp0cbzSKiIzuzBVVRksT0AHc02vqv8A4J+/Ad/iR8TV8X6lAT4f8MSrMm4NtnvfvRKD0Oz/AFhweCIwQQ1XCLlLlR52PxkMBh54ip0X3voj7t/ZZ+ETfBX4L6F4fuV26tIhvdR6cXEmGZeCQdg2x5BwQgPevXOtGB06UV66VlofznXrTxFWVWo9ZO46iimSN5aMxOABTMT4u/4KHftEXHgzQYPh1oMxh1XWYDNqVyjFWhtCSojXA6ylWB54VSCPnBH5u123xr+IUnxW+K/ijxW5cxaleu9usqhWW3GFhVgCRuESopweoNcTXlVZ88j+g8ky+GXYOEEveer9X/kFFFFYn0AUUUUAFFd38H/gr4q+OXigaJ4Ws1nlRRJcXVwxS3toycbpGAJAz0ChicHAODX398Mv+Cbvw/8AC8azeLby98ZX20hoWdrO0UkghgkbeYWGCOZCDk/KO20Kcpnz2Y55g8sfJVd5dlv/AJI/MdVLMAASScADvXrfw9/ZP+KvxKlX+y/B9/a2p2k3uqp9jhCt0YGTBkAxzsDEelfrV4M+E3gz4e5bw14W0nRJWjETzWVnHHK6g5wzgbm59Sa63GOgxXTHDfzM+IxPGlSV1hqSXm9fw0/M/NrxT+wBF8Lfgt4p8XeKfER1HXNPsGmgsdMTbaxyA7QWkcb5Bgg4ATB4O4dfjGv2U/a7YL+zb4+JOP8AiXN/6EK/Gusq0YxaSPpOF8diMwoVKuJlzO9l0totgooorlPtAooooA9Y/ZQ/5OM+H/8A2FY/61+zn8I+lfjH+yh/ycZ8P/8AsKx/1r9nP4R9K9DD/Cz8d4z/AN8p/wCH9WKa/GT9rL/k4/4gf9hR/wCS1+zZr8ZP2sv+Tj/iB/2FH/ktGI+FBwZ/vlT/AA/qjyWiiivPP2IKKKKACv0J/wCCWdyG0P4hW/8AFHc2bn6MsoH/AKAa/Pavtf8A4JfeLIrHx54z8OMn73UtPgvkkyAP3EjKVx1JIuc8dlNb0X76PleJqbqZVVS6Wf3NXP0fpKKWvUPwYbWd4i1aHQdA1LUp2xDZ20lw59FVSx/QVo55rwf9tf4iRfD39nfxM25PtmsRf2NbRyZ+dpwVkxjoVi81h2ygpN2TZ1YSjLEV4Uo7yaR+QdFFFeMf0ulZJBRRRSKCiiigD9cv2C/+TVfBn+9e/wDpbPX0HXz5+wX/AMmq+DP969/9LZ6+g69eHwo/nDNP9+r/AOKX5i0UUVoeWUr/AE+21azns7yCK7s7hGimgnQOkiEYZWBBBBBIIPBBr5h+LH/BPH4dePJJr3w80/grUpMn/QVEtoWJzkwMRt44CxsgHpX1TmipcVLdHbhcdicHLnw83F+X6rqflN8QP+CenxX8HtNLpNrZeLbFd5Emm3CpMEGSC0Um05IH3ULnJwM18++JvBXiHwXcrb+INC1LQ53GUj1K0kgLD1AdQT+Ffu3j15qvdWcF5byQ3EMc8MilXjkUFWBGCCD1BHY1zyw8Xs7H2mG4yxdNWrwUvPZ/5fgfgnRX7MeJv2S/hB4siWO98AaPCB/FpsJsWP1aAoT+JryLxX/wTT+GutTXM+j6nrfh5pP9VbxXCT28X0EiGQj6yVg8PLofSUOMcFU0qxcfxX+f4H5iUV9n+Nv+CYvjHSsSeGPFOla9GEYvHfRPZSk54VADIrZHcstfNPxI+CPjr4RXHl+LPDV7pEbEKt0yiS2diCQomQtGWwCdoOR3ArGVOcd0fTYXOMDjXy0Kqb7bP7mcNRRRWZ7AUUUUAFbfgnxfqPw/8XaR4j0mXydR0y5S5hYk7WKtko2CCVYZVhnlWI71iUVSdjOpCNSLhJXT0Z+7Pg3xRaeNvCejeINP3fYtUs4r2ESABwkiBlBAJAIBAIzwc1ttXzx+wR4i/t79mXw1G07zz6fLc2UrOeV2zuyKPYRvGB7Cvoj1r14yukz+bMZQ+rYmpR/lbX3MSvxj/av/AOTjfiB/2FJP5Cv2c9K/GP8Aav8A+TjfiB/2FJP5CubEfCj7Xgz/AHyp/h/VHk9FFFeefsQUUUUAFfoz/wAEuv8AkQ/Gv/YSi/8ARVfnNX6Bf8EsdTaSx+ImnnaFiksbheeSXE6tx7bB+ddFB++j5LiqLllVR9mvzR96UUUV6Z+EhRRRQAyT/Vt/u1+BlfvnJ/q2/wB2vwMrixH2T9P4J+LEf9u/qFFFFcJ+qBRRRQAV+uv7Bf8Ayap4K+t9/wCls9fkVX66/sF/8mqeCvrff+ls9dWH+J+h8Bxn/uNP/H+jPoDvXnn7RP8AyQP4kf8AYuaj/wCk0leh9688/aJ/5IH8SP8AsXNR/wDSaSu/oz8jw/8AGh6o/E2iiivHP6ZjsgooopFBRRRTJlsz9sv2ef8Akgnw4/7FzTv/AEmjr0Md688/Z5/5IJ8OP+xc07/0mjr0Md69noj+ZsR/Gn6v8xaKKKZznyh/wUo/5N9tf+w1b/8AouWvy4r9R/8AgpR/yb7a/wDYat//AEXLX5cV52I+NH7Xwf8A8i5/4n+gUUUVyn3AUUUUAdF8Of8AkoXhj/sKWv8A6OSv3Sj+4PpX4W/Dn/koXhj/ALClr/6OSv3Sj+4PpXfh9mfk3Gv8Wh6P9B1FFFdh+ahRRRQAUUUUAFFFFABRRRQAUUV8c/tsftQeMvhD4y0Twz4Smg0tptPGpXF88KTu+6WSNY1V1KgL5TMTgk7h93adwB9jUV+VP/Dc3xo/6GyP/wAFdp/8ao/4bm+NH/Q2R/8AgrtP/jVK47H6rUV+VP8Aw3N8aP8AobI//BXaf/GqP+G5vjR/0Nkf/grtP/jVFwsfqtRX5U/8NzfGj/obI/8AwV2n/wAao/4bm+NH/Q2R/wDgrtP/AI1RcLH6rUV+VP8Aw3N8aP8AobI//BXaf/GqP+G5vjR/0Nkf/grtP/jVFwsfqtRX5U/8NzfGj/obI/8AwV2n/wAar9Af2bfjJH8cPhTpuvvsTVoSbPU4Y+iXKAbmAwMBlKuAM4D7ckg0XCx6rRRSUxCduledfHj4P6b8c/hrqnhbUNsMsy+dZXjRh2tbhQfLlXPoSQQMEqzLkZzXoufWii11ZmlKrOjUjUpuzTuj8IPFPhjVPBXiPUtB1m0ex1TT52t7i3fqrg4OCOGB6hhwQQQSCKyq/SP/AIKBfsz/APCZ6HJ8R/Dlov8AbelQ/wDE1hjBDXdqo4kGOC8QznOCUB5+RVP5uV5VSDps/oLJ8zhmmGjVjpLaS7P/ACYV0vw9+I3iL4V+J7bX/DGpy6XqUIK+ZHysiEgsjqeHU4GVYEZAPUAjmqKzTsezUpwrQdOorp7p7M/Vn9m/9uDwt8ZI7TRtfkh8M+MGVU+zTPttrxycf6O5PUnGI2O75sAvgtX04p3fSvwKr6P+CP7dfxB+Ecdtpuoyr4w8PQjaLPUpSJ41AOFjuMEgDjAYOAF2gL1HZTr9JH5hmnCMrurgH/26/wBH/mfrMKSvnr4X/tzfCv4kQxx3GtDwpqRHzWevbYFGACSJsmMjOQMsCcdBXv8AHPHcRLJG6vGwBDKcgg9811xalsz85xGFr4WXJXg4vzRYopKWqOUKKKKACiiigBKPxpp+tcV8QvjJ4J+FdsZvFfibT9GOwypbzTAzyKDglIhl3wT/AAg0eppCnOrJQpxbb6I7bNc7428f+HvhzoM+teJdWtdH0yEHM10+3ccE7VXq7EA4VQSccA18YfFz/gplawLcWHw50JrqXJRdY1gbIxhiNyQKdzAryCzKQSMqelfEnxC+J3in4qa42r+K9autZvuiNOcJGOOI0ACxjjOFUAnJ6kmuadeMdtT7XLuFMXiWp4n93H8X8uh9IftQft4ar8UIL7wx4IWfQvCsn7ue+Y7bu+TGCOD+7jboQCWIHJALJXyPRRXBKcpu8j9YwOX4fL6SpYeNvzb82FFFFQekFFFFABRRRQAUUUUAFFFFABRRRQI3PBPg3VviJ4t0rw1odq13qmpTrBDGoJAJ5ZmIBwqqGYtjChWJ4Ffs78FfhLpXwU+HOk+FdKVZEtY91xdeXta6nbmSVhknLN0BJwAFBwBXgv7CP7L7fCjw2fGXiWyeHxfq8OyK2nGG0+1JDBCvaR8KzZ5UBVwp3A/Whr06NPlV3uz8U4nzhY6t9Xov93F/e+/+Q+ikpa6D4gQVw/xw1SfQ/gz461K2bZcWmhX08TejLA7KfzAruBXnX7RQ3fAL4jf9i7qH/pNJSZvh9a0L90fifRRRXjH9NR2QUUUUigooooA/VT/gnj4LsfDf7POn6zBCv9oa/dXFzdTFV3ERyvCibgMlQIyQCTguxH3jX1B718Zf8E4fjTp+ufDx/h3dypBrGiPLPaRtx9otZHLlhk5LLI7gjAwGTGecfZvtXr07OCsfzvnUKtPMK3td3JtenT8B1FFVby8g0+1mubiaOC3hRpJJpXCqigZLEngAAEknpitDxVrofO3/AAUC8U2/h/8AZp1u0ldkuNYurawtwueW81ZmBx28uGSvycr6O/bY/aMt/jp8QLex0STf4W0EPDaS/wDP3KxHmzYwCFO1VUHPCk8biB8415laSlLQ/d+GsDPA4BKorSk727bJfgFFFFc59WFFFFAHrH7KH/Jxnw//AOwrH/Wv2dHQfSvxi/ZQ/wCTjPh//wBhWP8ArX7Ofwj6V6GH+Fn47xn/AL5T/wAP6sGr8Z/2tFK/tI/EAEYP9pufzVSK/ZivyF/bo046f+1H40AiaKKZrWZCw4fdawksPUbtw+oNPEfCiODZWx0494/qjwWiiivOP2UKKKKACu0+DfxOvvg78StD8XafH58mnTbpbcttE8LArLGTg4yjEA4O04ODiuLopp2d0Y1aca9OVOaupJpryZ+4Xww+K3hn4veFrfX/AAxqUd/aSACSPcBLbyYBMciZyjjPQ9QQQSCCey3f5Ffg94f8Ua14R1D7foWr32i3wUp9p0+5eCXaeo3IQcH0zXoP/DU3xb/s/wCw/wDCwdc8nbt3faj5mP8Arp9/PvuzXdHEK3vI/LcRwXV537CquXz3P178dfETw58NNBn1nxNrFro+nxA/vbl8F2ALbEUcuxAOFUFjjgGvyd/as/aSvP2ivHEVzFC9j4a0sPFpdnIB5m1iN8smCRvfavyg4AUAZIYnybxF4q1rxdfm+13V7/W73aF+06jcvPJtHQbnJOB6ZrLrGpWc9FsfSZLw3Syyft6kuap07L08wooormPtAooooAKKKKAP1z/YL/5NV8Gf717/AOls9ekfG3xjqfw8+E/inxNo8NvPqWlWMl3DHdozRMUGTuCspIwD0Irzb9gv/k1XwZ/vXv8A6Wz1678SvCp8c/D3xN4cWVYG1bTLmxErLkIZYmQMR3wWz+FexH4FbsfztjuRZnVc9Vzu/pzH50f8PNvin/0BfCf/AIB3X/yRR/w82+Kf/QF8J/8AgHdf/JFfJUsbwyPHIjRyIxVkZcFSOCCD0NMrzfbVO5+yx4fytpP2KPrj/h5t8U/+gL4T/wDAO6/+SKP+Hm3xT/6AvhP/AMA7r/5Ir5Hoo9tU7j/1eyz/AJ8o+t/+HmvxTzn+xfCf/gJdf/JFdp8GP+Chnjnxt8VvC/h/xDpfh630jVL6OymksbadJVaQ7UKlpmA+dlzkHjP1r4UqW3uZbO4iuLeV4J4mV45Y2KurKchlI5BBAIIpqtNPcyq8OZdOnKMKSTadn28z97v4c0o6eleBfsn/ALTml/H3wdBbXc8dt4z0+FRqVizKpl24U3EY4zGxIyAPkLbTwVLe+fjmvTTUldH4bicPUwlWVGqrNC+npVHVtHste0640/UrSC/sblDFPbXMQkjlQjBVlIIII6gjFXv5VR1jWLHw/ptzqGpXlvYWNshlnurmVY44kAyWZiQAAO5NMwjzXXLufjz+1h8I7L4L/G7WtA0tGj0WUR3unxu5do4pBkpk8kK4dRkkkKpJJJNeP16/+1d8XrT42fGrWfEGmFm0aJUsdPd0KM8MfG8g8jcxdgCAQrKCAQa8grx6luZ8ux/R+W+2+p0vb/HZXvvewUUUVB6QUUUUAfqB/wAE04ZI/gDqDMCFk124ZCe48qAZ/MH8q+tP4a8H/Yf8PS+G/wBmPwZFcQCG4uo5r1tv8SyzyPGx+sbR/pXvHavYgrQR/OWbTVTH1pLbmf5imvxi/aw/5OO+IH/YUk/kK/Z2vxw/bI01tL/aa8ewnq14k/8A38hjkH6NXPiPhR9VwY19dmv7v6o8Zooorzz9jCiiigAr2v8AZH+OsXwF+LMGq6gGOgahCbHUtis5jjLKwlVR1KsASMElSwAyRXilFVGTi+ZHLisNTxdCVCorqSsz92/C/i7R/Gmj22r6Fqdrqum3C7orq1lEiN2IyO4PBB5BBBAIrY3D1r8INA8T6z4UvvtmiatfaPdj/l40+5eB/wDvpSD+tdR/wvv4m/8ARRfFv/g8uv8A4uu5YldUfl9XgutzP2VVW89z9thIpbGRn606vyT/AGS/HHiPxV+1B4EbW9f1TWD9pm+a/vZZz/x7y/3mNfrXj8K3pz51c+SzbKpZTVjRnLmbV9rBJ/q2/wB2vwMr985P9W/0r8DK5sR9k+z4J+LEf9u/qFFFFcJ+qBRRRQAV+uv7Bf8Ayap4K+t9/wCls9fkVX66/sF/8mqeCvrff+ls9dWH+J+h8Bxn/uNP/H+jPoDvXnn7RP8AyQP4kf8AYuaj/wCk0leh9688/aJ/5IH8SP8AsXNR/wDSaSu/oz8jw/8AGh6o/E2iiivHP6ZjsgooopFBRRRTJlsz9sv2ef8Akgnw4/7FzTv/AEmjr0Md688/Z5/5IJ8OP+xc07/0mjr0Md69noj+ZsR/Gn6v8xaKKKZznyh/wUo/5N9tf+w1b/8AouWvy4r9R/8AgpR/yb7a/wDYat//AEXLX5cV52I+NH7Xwf8A8i5/4n+gUUUVyn3AUUUUAdF8Of8AkoXhj/sKWv8A6OSv3Sj+4PpX4W/Dn/koXhj/ALClr/6OSv3Sj+4PpXfh9mfk3Gv8Wh6P9B1FFFdh+ahRRRQAUUUUAFFFFABRRRQAV8G/8FMPCyR6h4I8SRW7eZLFcadcT9gFZJIV+vzzn8DX3lXhf7Z3w8/4WJ8A9eSKMyX2j41i2+cqN0IbzMgdcwtMAPUigaPyjoooqCgooooAKKKKACiiigAr3H9kT47H4I/E+I382zwxrOy01MMMiIZPlz9RyjMc9fkd8AnGPDqKAP3OVgygggqRkEdKdXyB+wh+0QvjDw7H8Pdeu1/tzSov+JZJI2GurRR/q+erxjjA5KY4+RjX1/VkBRRRQAwqG4PQ1+Yv7cf7J7fC/WpvHHhSwK+D7+TN5bwD5NNnY44UfdidiMY4Vjt+UFAf07qlqmk2mtabc6fqFtFe2V1E0M9vcIHjkRgQVZTwQQSCD1zUTgqkbM9nKs0q5XiFWhqno13R+DFFfTP7X37Id98DNVl8Q+HoZr3wJdSYViS76a7HiKQnkoScK568Kx3YL/M1eTKLi+WR++YLGUcdRjWou6f4eTCiiipO4K6zwT8V/GXw3mjk8M+JtU0VVkEpgtbplhdh03xZ2OPZlIrk6KabWxjUpU60eWpFNdmro+n/AA3/AMFFvi/oUDR3lxo3iFu0mo2G1h9PJaIfmDXqul/8FTZ1hgTUvh1HJIBiWa11cqCe5VGgOB7Fj9a+C6K1Vaa6ng1uHssrO8qKXpdfkfpBY/8ABULwdIo+1+ENdgbuIHhkH5llq1N/wU/8BKv7vwt4kZvRktwPzEpr81aKr28zi/1Tyy/wv72foRqn/BUzTIf+Qd8Pru6H/T1qawf+gxPXA+Kf+CnnjrULpv7A8MaHo9oVxsvWlu5g3qHVo1/Aoa+NaKTrT7nRT4Zyum7qld+bb/U9j8afte/F7x4nl3/jfULSAOWWHSttiORgqWhVWZcdmYivIJp5LqZ5ZpGllkYs0jsWZmPUknkmo6KzcnLdnvUcJQwytRpqK8kkFFFFQdYUUUUAFFFFABRRRQAUUUUAFFFFABRRRQIK+2/2Ff2RpPEV5ZfEnxjaNHpFu6zaNp0qkG6kBBW4cH/lmDyo/iI3cKBv5z9jb9ja5+KF9aeMvGVo9v4OgcSW1nKpVtTYHjjqIgRyf4ug4yR+mlrbRWcEcEMawwxqESNAFVVAwAAOgA4wK7aNL7Uj8z4k4gUFLBYSWr0bX5L9SyFAAGKWiiu4/KQooooAaetZPirQYfFHhnVdHuR/o2oWktrL/uyIVP6E1r9aD6UFRk4tSXQ/BPUtNutH1C6sL23ktL21laCe3mBVopFYqysDyCCCCPUVWr6U/b3+Ecvw3+ON5rNvBs0XxRu1GBlX5VnyBcoTnk7yJD2xMB2NfNdePOPLJo/pLAYqOMwtOvDql9/VfeFFFFQd4UUUUAXNJ1m/8P6nb6lpd7cadqFu4khurWVo5YmHcMCCD9DX198O/wDgpl4y8P2ItfFnh2x8VsiqqXlvN9hmPJy0mFdGJGMBVQDHfNfGtFXGco/CzzMZlmEzBJYmCdvk/vWp99X3/BU5fL22fw4YyYOGm1kAA44OBD8wz7ivmz4zftcfEb44WbafrOpQ6borYL6VpEZggkI5Bcli7jODtZiAQCFBFeMUVTqzlo2cWFyHLsHP2lKkrrq7u33hRRRWR9AFFFFABRRRQB6n+yzMIf2ifh+zHA/taFfxY4H86/aEdBX4kfAG4Nr8dPh3IG2f8VFp4LZwMG4jDZ/Amv23XoPpXoYf4Wfj3GcbYum/7v6i1+c3/BT7wPPZ+NvCXi6NHa1vrF9NlZUO1JIXaRdzYwCwlbAzkiI+lfox+NePftUfBs/HD4M6zoVuqtrEG2/0xmGcXEeSF5YAb1Lx7icL5mcHGK3qR5otHzOSYxYHH060tr2fo/6ufjZRUk8ElrNJDNG0U0bFHjkUqysDgqQeQQe1R15B/QqakroKKKKCgooooAKKKKACiiigQUVo+IPDupeFdUfTdWs5dP1CNI5Htp12ugkRZF3L1UlWU4PIzggEEVnUCjJSSlF3TCiiigoKKKKAP1y/YL/5NV8Gf717/wCls9fQZ54r58/YL/5NV8Gf717/AOls9fQdevD4Ufzhmn+/V/8AFL8z8h/22/hLL8LPjxrMsULro+vu2q2ch+7ukYmZAdoAKyFsKM4Vkz1rwKv2I/as/Z9t/wBoL4by6bE0Vv4i08m50q7kUYEmMGJj1CSDAOOhCthtuD+Qms6NfeHdWu9M1O1lstQs5WguLeYbWjkU4ZSOxBFcNaHJK/Rn7Bw3mkcdhI05P34KzXl0ZSooormPrwooooAu6RrN/wCH9St9R0u+udNv7c74bqzlaKWM9MqykEHnqDX0L4S/4KCfGHwvCsVxqeneIo1GFGq2KlgAMD5ojGxPuxJPc1820VcZyj8LODE4DC4xfv4KVu6/Xc+rdS/4KUfFi+tWigs/DenO3Se2sZWdfoJJmH5ivDPiR8cvHnxelDeLfE17q8K4K2pZYrdWXOGEMYWMNhiN2Mnua4WinKpOW7OfD5TgsK+ajSSfe2v3hRRRWZ64UUUUAFb3gLwZqHxE8a6L4Z0tC19ql1HbRHaWCbmwztjnai5Ynsqk9qwa/Q3/AIJ3fs4y6HZt8UPENm0V5eRGLRLedAGSBhhrnB5BcfKp4+QsfmVwa1pwc5WPDzjMYZbhJVW/e2S7s+0vDPh+08J+HdM0XT4zDYafbRWlvHnOyONQqjJ64AFavWlor1j+eZNybb6jfTHSvyg/4KFeHJNE/aY1a7c/LrFja30f+6IxAf1gNfrAepr4h/4KbfDF9U8I+HPHNnbb5NJmawv5I48t5EpBjZm7KsgKjPef3rCtHmgfV8L4mOGzKClopXX3/wDBR+dNFFFeWfu4UUUUAFFFFABRRRQB7Z+xZ/yc94D/AOvmb/0nlr9iK/Hf9iz/AJOe8B/9fM3/AKTy1+xFejh/hfqfjfGf+/Q/w/qxJP8AVt/u1+BlfvnJ/q2/3a/AyoxH2T0OCfixH/bv6hRRRXCfqgUUUUAFfrr+wX/yap4K+t9/6Wz1+RVfrr+wX/yap4K+t9/6Wz11Yf4n6HwHGf8AuNP/AB/oz6A7155+0T/yQP4kf9i5qP8A6TSV6H3rzz9on/kgfxI/7FzUf/SaSu/oz8jw/wDGh6o/E2iiivHP6ZjsgooopFBRRRTJlsz9sv2ef+SCfDj/ALFzTv8A0mjr0Md688/Z5/5IJ8OP+xc07/0mjr0MV7PRH8zYj+NP1f5i0UUUznPlD/gpR/yb7a/9hq3/APRctflxX6j/APBSj/k321/7DVv/AOi5a/LivOxHxo/a+D/+Rc/8T/QKKKK5T7gKKKKAOi+HP/JQvDH/AGFLX/0clfulH9wfSvwt+HP/ACULwx/2FLX/ANHJX7pR/cH0rvw+zPybjX+LQ9H+g6iiiuw/NQooooAKKKKACiiigAooooAKTrwaWigD8f8A9pP4SyfBn4va1oKRMmlyv9t0xuxtZCSoBJJOwhoyT1KE9CK8vr9Qf22/gafix8MW1fTLcy+JPDoe5t1jUlriAgGaEAHk4UOvBOU2gfMTX5fVLKQUUUUhhRRRQAUUUUAFFFFAGl4b8R6n4R16w1rR7uSw1SxmWe3uI8bkdTkHByCOxBBBBIIIJFfrR+zv8ddN+PXgGHVrZorfWbXbDqunoebebH3lBJPlvgspyeARncrY/IWu5+DPxe1n4I+OrPxLo22UoDDdWchKpdQEgtGxHTOAQedrKpwcYLTEfsvRXI/C/wCKGgfF/wAH2fiXw5dfaLG4yjxSYWa3lGN0Uqgna65GRkgggglWBPXVRIUlLRQBQ1fSbPXNNutO1C2hvLG6jaGe3uEDxyIwKsrKeCCCQQfWvzL/AGsP2IdS+FE1/wCKvBcMuqeCwTNNaqWe40tep3EkmSJeoc5Kj72dpc/qD3pCAy4OCKzqU1UVme1lebYjKqvPRd0910f9dz8DKK/Rf9p3/gn5aeJjceJfhjDb6Zqp3PcaASIra46nMJPETE8bThDkYKYO789tb0TUfDWq3GmatY3Om6jbtsmtbqNo5Yz1wVIBHBB59a8ydOUGft+WZths0p89KWq3i91/Xco0UUVme0FFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFbXg/wAGa54+8QWmh+HdMuNX1W5YLHb26bj1ALMeiqM5LMQFGSSAM09WROcKcXObsl1Zi19t/si/sK3PiSaz8Y/Emxe10dSJLHQLhSJLs9RJOp5WP0Q8t/FhRh/YP2X/ANhPSfha9l4m8aeRr3i2NvNgtl+a0sGByrLkfvJR13EAA/dGVDn65GO1d1OhbWR+VZ5xR7RPDYF6bOX+X+ZDbWsVnBHDDGsMEahEjjUKqKBgAAdABxgVYopCcV2H5oLRRRQAUUUUAFFFFAHmX7QHwR0v4+fDm98Nai/2a5yLiwvlGWtrhQQr47gglSO6s2CDgj8eviD8Pte+F3iy+8OeI7B7DVLRsFW5WRf4XQ9GVhyGHX65Ffuh9K8v+OX7PfhL9oDw+uneIrVkvLf5rPU7UhLm2J67WIIKtjlWBB4OMgEc9Wlz6rc+wyHPpZXL2VXWm380+6/U/Fuivob4y/sOfEj4UTTXNnp7eL9CVjsvtIiZ5VXnBkgGXQ4GSV3KOMtXz26NG7I42sp2srDBBHY150oyi7SP2XC47D4yHtKE01/W/VDaKKKk7gooooEFFdB4M+H3iX4iaquneGdCvtcvGZVMdnAziPcwUF2A2ouTyzEKOpIFfaXwH/4JuTyS22sfFG7WKMEOPD2nyZZsEHbNODwOGBWMnOQQ46VrGnKeyPHx2b4TL481aav2WrZ4P+zD+yrrXx81WS/uo7jTfB1nk3OoKu03DAEiGHcCCxOMnBCjryQD4LX7yaTomn+H9Jg03TLKDTrC3jEUFtaxiOONR0VVAAA9hX4pfEf4X6x4P+IXiTQo9L1CaDT9RuLaKb7K+JY0kYI446MoVh7EVrUp8kVY+eyPPJZnia3tXyqysuy/z2OIorV/4RTWv+gPqH/gM/8AhR/wimtf9AfUP/AZ/wDCuazPtPbU/wCZGVRWr/wimtf9AfUP/AZ/8KP+EU1r/oD6h/4DP/hRZh7an/MijY3k2nXtvd27mK4t5FljkU4KspBUg9iCBX7seFtftPFfhvStasH8yx1K0iu4G/vRyIGU/kRX4a/8IprX/QH1D/wGf/Cv07/4J+fEq88TfCAeFdYhuoNX8NP5Cfa0cNLaOS0LAsBkL80e0Z2hEzjcK68O7Np9T884woqtQp14O/I2n6Pr959TUlLRXefkp+e/7eX7JlzDf3/xO8HWPnWsuZtd0+3T5o26m7VQOQeTJjkHLnILFfhGv30YZXFfFn7R3/BPXS/GU11r/wAOXt9A1dsvLo0i7bO4bOSYyB+5YjPABQnaMJyx46tHmfNE/Tcg4mjRhHCY16LRP9H/AJn5vUV0/jz4ZeK/hjqjad4q0G90S53Mq/aovklxwTHIMpIPdSw965iuFq25+o06sK0VOm00+q1CiiikahRRXWfD/wCFXi/4p6gLLwp4evtal3bHe3ixDESCR5kpwkecdWIFNK+xlUrU6MXOpJJLq9Dk6+0v2Jf2OJvGF9YfEDxxZNH4fhZbjStMnUg37jlZpB18oHBCniTgnKcP6d+zv/wTv0rwjNba78SJLfxDqiYeLRoQWsoSDkGQkAzHp8pAQcghxg19pqAowOK7qVG3vSPzDPeJ41ISw2B2ejl+i/zPx9/baG39qLx2PSa2/wDSWGvDq+gf20vD+q3n7TnjiaDTLyeFprfEkcDMrf6LCOCBg14n/wAIrrf/AEB7/wD8BX/wrkmvefqfeZZVgsDRvJfDH8jKorV/4RXW/wDoD3//AICv/hR/wiut/wDQHv8A/wABX/wqbM9L21P+ZGVRWr/wiut/9Ae//wDAV/8ACj/hFdb/AOgPf/8AgK/+FFmHtqf8yP1d/YL/AOTVfBn+9e/+ls9fQZrwL9hW1nsf2XfB8FzDJbzK17ujlUowzeTkZB5HBFe+mvVh8KP51zR3x1f/ABS/MTPfpXzV+1V+xvpPx5gbXNIeHRfGsUe1btlxDegDCpPgZyMABwCQOCGAAH0p6UtXJKSsznwuKrYOqq1GVpI/Crxx4B8Q/DXxBPofifSbnR9Th5MNwv3lyQGVhkOpIOGUkHBwTWBX7i/Eb4T+Evi3ow0zxZodrrFqpJjMqlZIScZMcikOhOBkqRkDByK+Hfiz/wAEzdV05nvPh3rqapb4J/szWSIpxgDASVV2OSc8MqAAD5jXBPDtax1R+t5bxZhsRFQxfuS/B/5fP7z4cors/HnwZ8c/C+eWPxR4W1PSI4n8s3U1uzW7HAOFmXMb9R0Y+lcZXK01ufbU61KtHnpyUk+qd0FFFFI2CiiigYUUVpaD4Z1jxVfCy0TSb7WLwjIt7C3eaT8FQE/pT1ZEpwguabsjNpVBYhQCSegr6c+F/wDwT5+Jvjpre41uK38F6VIFdpNQYSXOxhnKwIc7h3WRoyOc19wfA79jj4f/AAQaHULWzbXvEUfzDV9UVXeI4H+pQDbGMgkEAv8AMQWIreNGUt9D5PMOJsDg0405c8uy2+8+YP2S/wBhG91q9s/F/wAS9Pey0qNlls/D9yuJblhyGuEP3Yx/zzPLfxBVGH/RKGFIY1jRQqKAAoGAPQYp46DHApc16EIKCsj8gzHM8RmdX2tZ+i6IdRRRVnlDf4qw/GXhLTfHnhnVNA1i2F3puo27208R4yrDBIPYjqCOQQCORW7xSYNA4ylGSlF2aPxV+PnwL134A+OrjQdXRprOQtLp2pKpEd5Dnhh6MMgMv8J9VKs3mtfuF8UvhP4Z+MnhO48PeKdOW/sZDvikB2y28gBAkjccq4yeR1BIIIJB/Pr4wf8ABOPxt4VvJrrwPcReL9IJ3JbSulvexDLHawYiOQABfmBBJJwg7+fUoSTvHVH7Lk/FFDEQjSxb5Zrq9n/kz5Cora8SeCvEPg2ZIvEGg6noUsnKpqVnJblvoHUE1i1y6o+5hVhUjzQldBRRRQXdBRRSqpZgACxPQDvQLmj3Pa/2LP8Ak57wH/18zf8ApPLX7Dr0FfkL+xjouoR/tLeBbh7C5SBbmYtK0LBR/o8vU4wK/XuvQw/wv1PxvjGSljYW/l/ViSf6tvoa/Ayv3zkH7tvoa/CH/hFdb/6A9/8A+Ar/AOFRiOh6HBUoxeI5nb4f1MqitX/hFdb/AOgPf/8AgK/+FH/CK63/ANAe/wD/AAFf/CuOzP1D21P+ZGVRWr/wiut/9Ae//wDAV/8ACj/hFdb/AOgPf/8AgK/+FFmHtqf8yMqv11/YL/5NV8FfW+/9Lp6/J/8A4RXW/wDoD3//AICv/hX6yfsL2k9j+y34MguIZLeZTekxyqVYZvZyMg9OCDXVh/ifofB8YzjLA0+V/b/RnvjV53+0R/yQP4j/APYuaj/6TSV6I3SvPP2goXn+BHxEijRpJH8O6gqogyzE20gAA7k13dD8mw/8aHqvzPxNorV/4RXW/wDoD3//AICv/hR/wiut/wDQHv8A/wABX/wrx7M/pRVqdl7yMqitX/hFdb/6A9//AOAr/wCFH/CK63/0B7//AMBX/wAKLMftqf8AMjKorV/4RXW/+gPf/wDgK/8AhR/wiut/9Ae//wDAV/8ACizE61O3xI/Z79nn/kgnw4/7F3Tv/SaOvQWrz/8AZ9heD4FfDyKVGjkj8PaerI4wykW0YII7EV6A1ex0P5rxH8afqxaWkpaZznyh/wAFKP8Ak322/wCw1b/+i5a/Liv1M/4KNWNzqHwDtorW3luZf7Ztz5cKF2xsl5wBnFfmR/wiut/9Ae//APAV/wDCvOxHxo/Z+EakY5e1J/af6GVRWr/wiut/9Ae//wDAV/8ACj/hFdb/AOgPf/8AgK/+Fc9mfbe2p/zIyqK1f+EV1v8A6A9//wCAr/4Uf8Irrf8A0B7/AP8AAV/8KLMPbU/5kXfhz/yULwx/2FLX/wBHJX7op9xfpX4g/D3wvrMfj7wy76RfKq6nbMzNbOAB5qcniv2+TOwfSu3D7M/KuNJRlVo8r6P9B9FFFdh+bhRRRQAUUUUAFFFFABRRRQAUUUUAFfmF+2v+zyfhJ44/4SHRbXy/CWuSs8aRR7Y7K5OWeHj5Qrcsg443KBhMn9Pa5n4geBNI+JnhHU/Deu27XGm38XlyBSAyEHKuhIOGVgGBweQMgjigaPxVoruvjR8IdY+Cfjy+8N6uDKIz5tpeqhVLuBidsqgk4zggrk7WDLk4zXC1BQUUUUAFFFFABRRRQAUUUUAen/AD4+a58A/GA1PTi13pVztTUdLd9qXUYJwR12uuSVbHGSDkMwP6r/Dn4kaD8VvCdn4j8OXwvNOuOCMYkhkGN0Ui9VdcjI9wQSCCfxZr0j4F/HjxH8BvFi6ro0n2ixnKrqGlTMRDeRg9D12uuTtcDKknhlLKzTE0fsRRXA/B/wCNHhj43eGl1fw5eiRowq3djKQtxaOwJCyJ2zg4YZDbTgnBx31USFFFFADa8p+Nn7Nvgn49af5fiLTvL1ONQlvrFmFju4FBJCh8HcuWb5WBX5iQAeR6v2pOKVk1Zm1GtUw81UpSaa7H5G/Hf9ivx38FWuL+C2bxT4YTLf2pp0LF4VAJJmhBLRgBSSwJQDGWBOK+fa/fRueoyK+ePjV+w/8ADv4vtc38NkfCviCZmc6lpSBVlc7julh+4+WbcSNrsR96uOeH6wP0nLeMGrU8cv8At5fqv8j8kqK+iviz+wn8T/hnJNcWGmf8Jjo6nK3eio0kwUsQoa3/ANYGxgnaHAB5brXzvJG8UjI6MjqSGVhggjqCO1ckoyjpJH6NhsdhsZDnoTUvn+aG0UUVB3BRRRQAUUUUAFFFFABRRRQAUUUUAFFFT2Njc6leQ2tnbzXV1O6xxQQIXeRicBVUcsSeABTJclHWRBS9eByTX038If8Agn/8SPiI0F1rsUfgnR3wxk1JC12VIP3bdSCCCACJGjPORnpX3R8F/wBj/wCHfwTa3vbDTDrHiCPn+2dVxLMrdzGuAkfcZVQ2Dgk10Qoylvoj5LMOJ8Fgrxpvnl2W3zZ8NfAT9gvxr8VGttU8RpJ4O8NOQxe6jP2y4XJ/1cRwVBx958DDKQriv0W+EfwQ8H/A/QRpfhXSltd6oLq9k+e5u2UEB5ZMZJyWIAwq7jtCg4rv+OOKK7Y04w2PynM87xeaO1WVo9lt/wAEdRRRWp4IUUUUAFFFFABRRRQAUUUUAFFFFADe2MZrhfHXwT8B/EqR5PE3hLStXuXQRG7ntl+0BRkhVlADqBk9COtd3SUrLqaQqTpvmpyafdHzH4n/AOCdvwf16JFsLHVfDrA5L6bqLuW+vniUfkBXNH/gmL8M/wDoYPFn/gVbf/I9fYVFR7OHY9WOc5hFWVeX3nyRpv8AwTP+FlndRyzap4mvo16wXF5AEb6lIVb8iK9J8O/sXfBjwvdLcWvgWyuZR/0EpZrxP++JnZf0r22j6U1CK2RnUzXHVVadaX3soaPoen+HdPt7DTLG106wt12Q2tpCsUUa+iqoAA9gK0OooGKPu1Z5bbk7sWm+Wp6qPyp1FAhvlp/dX8qPLT+6v5U6igd2N8tP7q/lR5af3V/KnUUBdjfLT+6v5UoUL0AH4UtFABRRRQIKKKKAM3WdC03xJp0+n6rYW2pWFwuya1u4VlikX0ZWBBHsRXivin9hz4NeKpbieTwjHplzMDibS7mW2CH1WJW8sf8AfOPaveqOalxT3R1UcVXwzvRm4+jsfIB/4Ji/DMkn+3/FY9vtdt/8j1NZ/wDBMz4X21zHJLrHii7RTkwzXkAVvqVgU/kRX1zxRxU+zh2PQ/trMf8An/L7zxLw1+xh8GfCt19otPA1ldS4x/xMpZbxP++JnZf0r2HTtLtNHsYLKwtYbK0gQRRQW8YRI1AwFVQAAAOABxVwH2/WlqrKOyPOq4qviHetNy9W2FLRRVHMNKK3VQfwo8tf7o/KnUUDuN8tP7q/lR5af3V/KnUUBdjfLT+6v5UeWn91fyp1FAXYgAXgDApaKKBBRRRQAUUUUAMaMOuGAP1rzTxV+zX8LvGbTvq3gTQ5ri4cyS3MFosE7serGWMK5J9c16b1pPvUtHua061Si+anJp+TsfNPiD/gnn8GtYtvKs9H1DQ3/wCe1jqUzv8AlMZF/SuVP/BMT4Z/9DB4s/8AAq1/+R6+wRSHNR7OPY9OOcZhFWVaX3nx+P8AgmL8NP8AoYPFn/gVbf8AyPXQeHf+Cc/wg0XP2221jX8/9BDUWTH/AH4EdfUIo+tHs4dhyznMZKzrS+88b8OfsgfBzwvzZ+AtLnJz/wAhFWvev/XZnr1TSND07w/p8Gn6XYWunWNuuyG1tYViijX0VVAAHsBV+j6VaSjsjzquIrV9as3L1dxaWiimc4UUUUAFFFFABRRRQAUUUUARvCki4ZFYe4rh9S+Bnw41i8ku7/wD4ZvLqU5ee40i3d2PqWKEn8a7uk5o9TSNScPhbR5y37N/wrc5Pw58LZ/2dHtwP0SnL+zr8LFGP+FceFMe+i2x/wDZK9FwKMVNl2NfrNf+d/ezkdB+EvgnwrN52i+ENC0mXOd9lp0MLZ9cqorqhCi9EUf8Bp/WiqRjKpOespNgI1HRRn6U6iiggKb5a/3V/KnUUAN8tP7q/lR5af3V/KnUUDuxvlp/dX8qPLT+6v5U6igLsb5a/wB1fypQAOAMClooEFJ160tFADfLT+6v5UeWn91fyp1FA7sb5af3V/Kjy0/ur+VOooC7G+Wn91fyo8tP7q/lTqKAuxOnSloooEFFFFACFQ3UZpPLT+6v5U6igBvlp/dX8qPLT+6v5U6igd2N8tP7q/lR5af3V/KnUUBdjfLX+6Pyp1FFAgooooAKKKKACiiigAooooAKKKKACiiigAooooA8u/aC+BGjfHrwTLpF+qW2q2+6XTdTCgvaykdCepjbADL0IAPVVI/J3xx4H1n4c+KL/wAPa/ZtY6pZvslibkEHlWU9GVgQQw6giv2zrxn9pH9m/Rv2gPDQRjHp3ieyQ/2fqm3p38qUDloyfxUnI7hkM/JWit7x14F1z4b+JrzQPENhJp2p2rYaOQcMvZlYcMrdQw4NYNSUFFFFABRRRQAUUUUAFFFFAHTfDv4keIvhV4mg1/wzqUmm6hGCjFeUmQ4LRyKflZTgHB7gEYIBH6U/s4/tdeHPjhb2+lXxi0LxmE+fTXf93clRlnt2P3hjLbCdygN94KWP5YU6GaS3mSWJ2iljYMroxDKwOQQRyCD3p3Fa5+51Ffnr+z7+35qPhsW2hfEcTa1pq7IotciG66gUcZmX/lsv3SXHz8MT5hIx93+E/GGjeOtDt9Y8P6nbavpk/wBy4tXDr0BKnurDPKkAjoQDVEm3SUtFABRRRQAz615/8SPgL4B+LkZ/4SrwvYapOQALwIYrkAZwomQhwvJ+Xdg9xXoNAodnoaU6tSjJTpyaa6p2Phv4gf8ABMHRb1pLjwZ4tu9KbDN9i1aEXMbMTlVWRNrIoHHIc+9fOnjT9g34w+DpJTFoEHiG1jQObnRrpZBk9VEb7JGI74THoTX64YPrSYrnlRhLyPqsLxRmOG0lLnXn/nufhL4m8F+IfBVzFb+IdC1PQp5VLxx6nZyW7OAcblV1BIz3FYtfvfJBHOjJJGrKwIKsMgg+orhda+Afw28QPNLqHgLw5dTzAh530uDzTn/bC7gfcHNZPDLoz6SjxqrWrUfuf6H4lUV+ul1+wf8ABC6Mjf8ACFmF3JOYtUvFwT6L52B9MYrnb3/gnL8IbpyYoNZsx/dh1AkD/voMaz+rz7nqx4ywEvijJfJf5n5W0V+of/DtX4Vbs/bfEePT7bF/8aq/Y/8ABOj4QWjAy2+sXgH8M2oEA/8AfAU0fV5l/wCuGXrpJ/L/AIJ+VtFfrtafsJfBCzkjkXwV5skZDAy6nduCR6qZcH6EYr0PRfgT8OfDs8U2m+BfDtjPGAFnh0uBZBj/AGtuc+5NUsO+rOOrxphl/CpSfrZf5n4yeFvAPibxxJJH4d8Parrzw48xdNs5bjy88AtsU4Hua9w8FfsA/GDxc4a70ez8M2zJvWbWLtV3c4xsi3yBu+GAHHWv1jWGONQEVVA4GBT61jh4rc8LEcZYuppQpqP4v/L8D4n+Hv8AwTH8M6TJHceMPE19r7qysLPT4xZwd9yuxLO4PGCpQjHvx9RfDv4N+CfhTZiDwn4asNH+XY88Ue6eRdxOHlbLvgk43E46Diu2ApfxreMIx2R8lis0xmNf7+o2u3T7loGPalooqzywooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAEpaKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooA8v+On7P8A4b+PXhl9P1iH7LqkIY2GsQoDNaOfxG9CfvITgjoVYBh+Xnxi+Cfij4H+Jf7I8R2exJNxtL+HLW92gIBZGIHIyMqcMuRkcgn9k653xx4D0D4keH59E8S6XDq2mTcmGYHKsAQHVhgowBOGUgjJ55pDPxRor6W/aH/Ym8RfCb7RrXhnz/E/hNQ0juqZurNRz+9VR8ygcmRRjhiyqACfmmpKCiiigAooooAKKKKACiiigArrfhv8WPFfwj1oap4V1m40udsedGpDQzqMgLJGcq4G44yMjOQQea5KigD9E/gv/wAFCPDfijyNN8e2o8M6o7BP7Qtwz2MhOACw5eLJOPm3KMElgOB9YaVq1lrmnwX2m3tvqFjOu+G6tZVkjkX1VlJBHuDX4eV2Hw7+MHjL4T3jXHhX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" alt="Logo Perusahaan" class="mx-auto mb-6 max-w-[150px] h-auto">
+            
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Kuis Keselamatan Pengelasan (Welding Safety)</h1>
+            <!-- Teks diperbarui agar sesuai format PPE/SDS -->
+            <p class="text-lg text-gray-600 mb-8 italic">
+                Dipersiapkan untuk level Kordinator ke atas.
+                <br>
+                <span class="text-sm font-bold underline">(Dibuat oleh Departemen SHE Austin - Indonesia)</span>
+            </p>
+			<button id="start-btn" class="w-full bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:bg-blue-700 transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                Mulai Kuis
+            </button>
+        </div>
+
+        <!-- 2. Layar Kuis -->
+        <div id="quiz-screen" class="hidden bg-white p-8 md:p-12 rounded-xl shadow-2xl">
+            <!-- Header Kuis: Judul dan Progres -->
+            <div>
+                <div class="flex justify-between items-center mb-2">
+                    <h2 class="text-xl font-bold text-blue-700">Kuis Keselamatan Pengelasan</h2>
+                    <span id="progress-text" class="text-sm font-semibold text-gray-600">Pertanyaan 1 dari 30</span>
+                </div>
+                <!-- Bilah Progres -->
+                <div class="w-full bg-gray-200 rounded-full h-2.5 mb-6">
+                    <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 3.33%"></div>
+                </div>
+            </div>
+
+            <!-- [BARU] Palet Navigasi Soal -->
+            <div id="question-palette" class="flex flex-wrap gap-2 mb-6 justify-center">
+                <!-- Tautan soal akan dimuat oleh JavaScript -->
+            </div>
+
+            <!-- Konten Pertanyaan -->
+            <div id="question-content" class="mb-8">
+                <p id="question-text" class="text-xl md:text-2xl font-semibold text-gray-800 mb-6">Memuat pertanyaan...</p>
+                <ul id="options-container" class="space-y-3">
+                    <!-- Opsi jawaban akan dimuat oleh JavaScript -->
+                </ul>
+
+                <!-- Kotak untuk Feedback (Benar/Salah + Penjelasan) -->
+                <div id="feedback-box" class="feedback-box hidden"></div>
+                
+                <!-- Kotak untuk Hint (Petunjuk) -->
+                <div id="hint-box" class="hint-box hidden"></div>
+            </div>
+
+            <!-- Navigasi Kuis -->
+            <div class="flex justify-between items-center border-t pt-6 mt-8">
+                <button id="prev-btn" class="bg-gray-200 text-gray-700 font-semibold py-2 px-5 rounded-lg hover:bg-gray-300 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                    Sebelumnya
+                </button>
+                
+                <!-- Grup Tombol Tengah -->
+                <div class="flex space-x-2">
+                    <button id="hint-btn" class="bg-yellow-500 text-white font-semibold py-2 px-5 rounded-lg hover:bg-yellow-600 transition">
+                        Hint
+                    </button>
+                    <button id="retry-btn" class="hidden bg-gray-500 text-white font-semibold py-2 px-5 rounded-lg hover:bg-gray-600 transition">
+                        Coba Lagi
+                    </button>
+                </div>
+
+                <!-- Grup Tombol Kanan -->
+                <div>
+                    <button id="check-btn" class="bg-blue-600 text-white font-semibold py-2 px-5 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                        Check Jawaban
+                    </button>
+                    <button id="next-btn" class="hidden bg-blue-600 text-white font-semibold py-2 px-5 rounded-lg hover:bg-blue-700 transition">
+                        Berikutnya
+                    </button>
+                    <button id="submit-btn" class="hidden bg-green-600 text-white font-bold py-2 px-5 rounded-lg hover:bg-green-700 transition">
+                        Kumpulkan Jawaban
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Layar Hasil -->
+        <div id="results-screen" class="hidden bg-white p-8 md:p-12 rounded-xl shadow-2xl">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 text-center mb-4">Hasil Kuis Anda</h1>
+            <div id="score-container" class="text-center mb-8">
+                <!-- Skor akan dimuat oleh JavaScript -->
+            </div>
+            
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Tinjauan Jawaban</h2>
+            <div id="results-summary" class="max-h-96 overflow-y-auto space-y-4 pr-2">
+                <!-- Ringkasan hasil akan dimuat oleh JavaScript -->
+            </div>
+
+            <button id="retake-btn" class="w-full mt-10 bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg hover:bg-blue-700 transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                Ulangi Kuis (Refresh)
+            </button>
+        </div>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- Data Kuis Keselamatan Pengelasan (30 Pertanyaan) ---
+            const weldingRawData = [
+                { 
+                    question: "Apa APD (Alat Pelindung Diri) utama yang wajib digunakan untuk melindungi mata dan wajah dari radiasi busur las (arc radiation)?", 
+                    options: [
+                        {text: "Kacamata safety bening.", isCorrect: false, rationale: "Kacamata bening tidak melindungi dari radiasi UV/IR yang intens dari busur las."},
+                        {text: "Helm Las (Welding Helmet) dengan nomor shade filter yang sesuai.", isCorrect: true, rationale: "Helm las dengan filter gelap (shade) yang tepat adalah satu-satunya pelindung yang memadai terhadap 'arc eye' dan luka bakar di wajah."},
+                        {text: "Kacamata hitam (Sunglasses).", isCorrect: false, rationale: "Kacamata hitam tidak dirancang untuk menahan radiasi UV/IR ekstrem dari pengelasan."},
+                        {text: "Face shield bening untuk gerinda.", isCorrect: false, rationale: "Face shield gerinda melindungi dari percikan, tetapi tembus pandang terhadap radiasi busur las yang berbahaya."}
+                    ]
+                },
+                { 
+                    question: "Apa langkah administratif pertama yang harus dilakukan sebelum memulai pengelasan di area yang bukan bengkel las (non-designated area)?", 
+                    options: [
+                        {text: "Memastikan area layak untuk aktivitas hot work", isCorrect: true, rationale: "Aktivitas hot work sangat berisiko jika tidak dipersiapkan secara baik dan benar"},
+                        {text: "Menyiapkan selang air.", isCorrect: false, rationale: "Menyiapkan alat pemadam adalah bagian dari izin kerja, tetapi izin itu sendiri adalah langkah pertama."},
+                        {text: "Membuka semua jendela untuk ventilasi.", isCorrect: false, rationale: "Ventilasi penting untuk asap, tetapi izin kerja panas fokus pada pencegahan kebakaran."},
+                        {text: "Memulai pekerjaan jika supervisor mengizinkan secara lisan.", isCorrect: false, rationale: "Izin kerja panas harus tertulis dan formal setelah area diperiksa."}
+                    ]
+                },
+                { 
+                    question: "Apa bahaya pernapasan utama yang dihasilkan dari asap las (welding fumes)?", 
+                    options: [
+                        {text: "Oksigen murni.", isCorrect: false, rationale: "Pengelasan justru dapat mengkonsumsi oksigen di ruang terbatas."},
+                        {text: "Partikulat logam halus dan gas beracun.", isCorrect: true, rationale: "Asap las mengandung partikel logam (seperti mangan, kromium) dan gas (ozon, CO) yang berbahaya jika terhirup."},
+                        {text: "Debu semen.", isCorrect: false, rationale: "Debu semen adalah bahaya di konstruksi sipil, bukan hasil dari pengelasan."},
+                        {text: "Uap air (Steam).", isCorrect: false, rationale: "Asap las jauh lebih kompleks dan berbahaya daripada uap air biasa."}
+                    ]
+                },
+                { 
+                    question: "Apa yang dimaksud dengan 'Primary Voltage Shock' (Sengatan Tegangan Primer) dalam pengelasan?", 
+                    options: [
+                        {text: "Sengatan dari memegang elektroda (stang las).", isCorrect: false, rationale: "Ini adalah sengatan sekunder (Secondary Shock) dari sirkuit keluaran mesin las."},
+                        {text: "Sengatan dari menyentuh bagian internal mesin las (sirkuit input 240V/480V).", isCorrect: true, rationale: "Sengatan primer (tegangan tinggi) terjadi jika menyentuh sirkuit input daya, biasanya saat perbaikan, dan sangat mematikan."},
+                        {text: "Luka bakar akibat percikan api (spatter).", isCorrect: false, rationale: "Ini adalah luka bakar termal, bukan sengatan listrik."},
+                        {text: "Kerusakan mata akibat 'Arc Eye'.", isCorrect: false, rationale: "Ini adalah cedera akibat radiasi, bukan sengatan listrik."}
+                    ]
+                },
+                { 
+                    question: "Bagaimana cara penyimpanan tabung Oksigen dan tabung Asetilena (gas mudah terbakar) yang benar?", 
+                    options: [
+                        {text: "Disimpan berdekatan agar mudah diakses untuk Oxy-fuel.", isCorrect: false, rationale: "Menyimpan oksidator (Oksigen) dan bahan bakar (Asetilena) bersama-sama menciptakan risiko kebakaran besar."},
+                        {text: "Ditidurkan (horizontal) di rak agar tidak jatuh.", isCorrect: false, rationale: "Tabung gas bertekanan harus selalu disimpan tegak dan diikat."},
+                        {text: "Dipisahkan minimal 6.1 meter (20 kaki) atau oleh dinding tahan api setinggi 1.5 meter.", isCorrect: true, rationale: "Pemisahan ini adalah standar OSHA untuk mencegah oksigen memperparah kebakaran jika tabung bahan bakar bocor."},
+                        {text: "Disimpan di ruang tertutup tanpa ventilasi untuk keamanan.", isCorrect: false, rationale: "Area penyimpanan tabung gas wajib memiliki ventilasi yang baik."}
+                    ]
+                },
+                { 
+                    question: "Berapa lama 'Fire Watch' (Pengamat Api) harus tetap berada di lokasi setelah pekerjaan pengelasan selesai?", 
+                    options: [
+                        {text: "Tidak perlu, bisa langsung pergi jika api sudah padam.", isCorrect: false, rationale: "Percikan api bisa membara di tempat tersembunyi dan baru menyala kemudian."},
+                        {text: "Tepat 5 menit setelah selesai.", isCorrect: false, rationale: "5 menit terlalu singkat untuk memastikan tidak ada bara api yang tersembunyi."},
+                        {text: "Minimal 30 menit setelah pengelasan berhenti total.", isCorrect: true, rationale: "Standar (OSHA/NFPA) mengharuskan fire watch menunggu minimal 30 menit untuk memantau bara api tersembunyi."},
+                        {text: "Sampai welder berikutnya datang menggantikan.", isCorrect: false, rationale: "Waktunya spesifik (minimal 30 menit) setelah pekerjaan panas selesai."}
+                    ]
+                },
+                { 
+                    question: "Mengapa pakaian berbahan sintetis (seperti poliester atau nilon) SANGAT dilarang dipakai saat mengelas?", 
+                    options: [
+                        {text: "Karena bahan sintetis tidak tahan lama.", isCorrect: false, rationale: "Meskipun mungkin benar, alasan utamanya adalah bahaya keselamatan yang parah."},
+                        {text: "Karena mudah meleleh dan menempel di kulit saat terkena percikan api.", isCorrect: true, rationale: "Bahan sintetis meleleh pada suhu tinggi, menyebabkan luka bakar yang dalam dan parah karena plastik cair menempel di kulit."},
+                        {text: "Karena bahan tersebut menghalangi aliran listrik.", isCorrect: false, rationale: "Bahan sintetis tidak dirancang sebagai isolator listrik dan bahaya utamanya adalah termal."},
+                        {text: "Karena warnanya mudah luntur.", isCorrect: false, rationale: "Warna luntur tidak relevan dengan keselamatan pengelasan."}
+                    ]
+                },
+                { 
+                    question: "Pengelasan pada material apa yang dapat menghasilkan asap 'Hexavalent Chromium' (Kromium Heksavalen) yang sangat karsinogenik?", 
+                    options: [
+                        {text: "Aluminium.", isCorrect: false, rationale: "Pengelasan aluminium menghasilkan asap aluminium oksida dan ozon."},
+                        {text: "Baja ringan (Mild Steel).", isCorrect: false, rationale: "Baja ringan umumnya menghasilkan asap oksida besi dan mangan."},
+                        {text: "Stainless Steel (Baja Tahan Karat).", isCorrect: true, rationale: "Stainless steel mengandung kromium. Panas tinggi dari las mengubahnya menjadi Kromium Heksavalen (Cr(VI)), yang sangat beracun."},
+                        {text: "Tembaga.", isCorrect: false, rationale: "Pengelasan tembaga menghasilkan asap oksida tembaga."}
+                    ]
+                },
+                { 
+                    question: "Apa metode pengendalian asap (fume control) yang paling efektif menurut hierarki kontrol?", 
+                    options: [
+                        {text: "Menggunakan kipas angin (fan) untuk meniup asap.", isCorrect: false, rationale: "Ini hanya memindahkan polutan dari satu area ke area lain, bukan menghilangkannya."},
+                        {text: "Membuka pintu bengkel (Ventilasi Umum).", isCorrect: false, rationale: "Ventilasi umum hanya mengencerkan asap, tidak menangkapnya di sumber."},
+                        {text: "Menggunakan 'Local Exhaust Ventilation' (LEV) seperti 'fume extractor'.", isCorrect: true, rationale: "LEV (kontrol rekayasa) menangkap asap berbahaya tepat di sumbernya, sebelum terhirup oleh welder."},
+                        {text: "Menggunakan respirator (APD).", isCorrect: false, rationale: "Respirator adalah APD, yang merupakan lapisan pertahanan terakhir setelah kontrol rekayasa (seperti LEV) gagal."}
+                    ]
+                },
+                { 
+                    question: "Apa nama cedera mata menyakitkan yang disebabkan oleh paparan radiasi UV dari busur las, sering terasa seperti 'ada pasir di mata'?", 
+                    options: [
+                        {text: "Katarak.", isCorrect: false, rationale: "Katarak adalah kekeruhan lensa, biasanya kondisi kronis, bukan cedera akut akibat las."},
+                        {text: "'Arc Eye' (Photokeratitis) atau 'Welder's Flash'.", isCorrect: true, rationale: "'Arc Eye' adalah luka bakar yang menyakitkan pada kornea akibat radiasi UV, yang gejalanya sering muncul beberapa jam setelah paparan."},
+                        {text: "Glaukoma.", isCorrect: false, rationale: "Glaukoma adalah kerusakan saraf optik akibat tekanan di dalam mata."},
+                        {text: "Mata Juling (Strabismus).", isCorrect: false, rationale: "Ini adalah kondisi ketidaksejajaran mata, tidak disebabkan oleh radiasi las."}
+                    ]
+                },
+                { 
+                    question: "Tiga komponen 'Segitiga Api' (Fire Triangle) yang harus dikendalikan saat kerja panas adalah:", 
+                    options: [
+                        {text: "Panas, Oksigen, dan Nitrogen.", isCorrect: false, rationale: "Nitrogen adalah gas inert yang sering digunakan untuk memadamkan api, bukan menyebabkannya."},
+                        {text: "Panas (Sumber Pengapian), Bahan Bakar (Fuel), dan Oksigen (Oksidator).", isCorrect: true, rationale: "Api membutuhkan tiga hal ini. Menghilangkan salah satunya (misal, memindahkan bahan bakar) akan mencegah kebakaran."},
+                        {text: "Listrik, Percikan Api, dan Asap.", isCorrect: false, rationale: "Listrik dan percikan api adalah sumber 'Panas'. Asap adalah hasil pembakaran."},
+                        {text: "Bahan Bakar, Oksigen, dan Air.", isCorrect: false, rationale: "Air digunakan untuk memadamkan api (menghilangkan panas), bukan menyebabkannya."}
+                    ]
+                },
+                { 
+                    question: "Apa bahaya atmosfer utama saat mengelas di Ruang Terbatas (Confined Space)?", 
+                    options: [
+                        {text: "Kebisingan yang bergema.", isCorrect: false, rationale: "Kebisingan adalah bahaya fisik, tetapi bahaya atmosfer (udara) jauh lebih cepat mematikan."},
+                        {text: "Kekurangan Oksigen (Oxygen Deficiency) atau Penumpukan Gas Beracun/Mudah Terbakar.", isCorrect: true, rationale: "Proses las mengkonsumsi oksigen, dan gas pelindung (seperti Argon) dapat menggantikannya. Asap las juga menumpuk dengan cepat."},
+                        {text: "Suhu yang terlalu dingin.", isCorrect: false, rationale: "Pengelasan justru akan membuat ruangan menjadi sangat panas."},
+                        {text: "Pencahayaan yang buruk.", isCorrect: false, rationale: "Ini adalah bahaya fisik, bukan bahaya atmosfer (pernapasan)."}
+                    ]
+                },
+                { 
+                    question: "Mengapa klem massa (ground clamp/work clamp) harus dipasang sedekat mungkin dengan area las?", 
+                    options: [
+                        {text: "Agar kabel ground tidak menghalangi jalan.", isCorrect: false, rationale: "Penempatan kabel (housekeeping) penting, tapi ada alasan teknis yang lebih utama."},
+                        {text: "Untuk mencegah arus las mengalir melalui jalur yang tidak diinginkan (misal bearing mesin, rantai crane).", isCorrect: true, rationale: "Menempatkan klem dekat las memastikan arus mengambil jalur terpendek, mencegahnya merusak komponen sensitif (seperti bearing) yang dilaluinya."},
+                        {text: "Agar lasan lebih kuat.", isCorrect: false, rationale: "Kualitas lasan tergantung pada parameter, bukan lokasi klem (selama kontaknya baik)."},
+                        {text: "Untuk mendinginkan material yang dilas.", isCorrect: false, rationale: "Klem ground tidak berfungsi sebagai pendingin."}
+                    ]
+                },
+                { 
+                    question: "Apa fungsi dari 'Flashback Arrestor' (Peredam Balik Api) pada selang las Oxy-fuel (Oksi-Asetilena)?", 
+                    options: [
+                        {text: "Menyaring kotoran dari gas.", isCorrect: false, rationale: "Itu fungsi filter, bukan flashback arrestor."},
+                        {text: "Mengukur tekanan gas yang keluar.", isCorrect: false, rationale: "Itu adalah fungsi regulator dan gauge (meteran)."},
+                        {text: "Mencegah api di ujung torch (stang las) merambat kembali ke dalam selang dan tabung.", isCorrect: true, rationale: "Flashback (balik api) adalah ledakan di dalam selang yang sangat berbahaya. Arrestor adalah katup satu arah yang memadamkan api tersebut."},
+                        {text: "Mencampur oksigen dan asetilena.", isCorrect: false, rationale: "Pencampuran terjadi di dalam torch/stang las itu sendiri."}
+                    ]
+                },
+                { 
+                    question: "Saat membuka katup tabung Asetilena, seberapa banyak Anda boleh membukanya?", 
+                    options: [
+                        {text: "Buka sepenuhnya sampai berhenti.", isCorrect: false, rationale: "Membuka penuh berlaku untuk tabung Oksigen, tetapi tidak untuk Asetilena."},
+                        {text: "Tidak lebih dari 1/2 hingga 3/4 putaran.", isCorrect: true, rationale: "Asetilena dibuka sedikit saja agar bisa ditutup dengan cepat jika terjadi keadaan darurat (seperti kebakaran di regulator)."},
+                        {text: "Buka penuh, lalu putar balik seperempat putaran.", isCorrect: false, rationale: "Ini adalah prosedur untuk Oksigen, agar katup tidak macet dalam posisi terbuka penuh."},
+                        {text: "Cukup buka sedikit hingga jarum regulator bergerak.", isCorrect: false, rationale: "Ini terlalu samar; standarnya adalah 1/2 hingga 3/4 putaran."}
+                    ]
+                },
+                { 
+                    question: "Apa risiko terbesar jika oli atau gemuk (grease) mengenai sambungan (fitting) regulator tabung OKSIGEN?", 
+                    options: [
+                        {text: "Sambungan akan menjadi licin dan sulit dikencangkan.", isCorrect: false, rationale: "Meskipun benar, itu bukan risiko terbesarnya."},
+                        {text: "Oli akan membeku dan menyumbat regulator.", isCorrect: false, rationale: "Oksigen bertekanan justru panas saat terkompresi."},
+                        {text: "Oli/Gemuk dapat meledak hebat jika kontak dengan oksigen murni bertekanan.", isCorrect: true, rationale: "Oksigen murni adalah oksidator sangat kuat. Oli/gemuk dapat menyala secara spontan (auto-ignition) dan meledak di bawah tekanan oksigen."},
+                        {text: "Akan mengotori area kerja.", isCorrect: false, rationale: "Kebersihan penting, tetapi bahaya ledakan adalah risiko utamanya."}
+                    ]
+                },
+                { 
+                    question: "Nomor 'Shade' (kegelapan) pada filter helm las ditentukan oleh...", 
+                    options: [
+                        {text: "Harga helm las.", isCorrect: false, rationale: "Harga tidak menentukan tingkat perlindungan yang diperlukan."},
+                        {text: "Jenis material yang dilas (misal: stainless vs aluminium).", isCorrect: false, rationale: "Material mempengaruhi asap, tetapi tidak secara langsung menentukan shade."},
+                        {text: "Tingkat Arus (Ampere) dan proses pengelasan (SMAW, GMAW, GTAW).", isCorrect: true, rationale: "Semakin tinggi Ampere (semakin terang busur las), semakin tinggi (semakin gelap) nomor shade yang diperlukan. Proses yang berbeda juga menghasilkan kecerahan yang berbeda."},
+                        {text: "Preferensi pribadi welder.", isCorrect: false, rationale: "Meskipun ada sedikit kenyamanan, ada standar minimum (misjal OSHA) yang harus diikuti berdasarkan Ampere."}
+                    ]
+                },
+                { 
+                    question: "Apa yang harus dilakukan jika kabel las (kabel elektroda atau kabel massa) ditemukan memiliki isolasi yang terkelupas atau retak?", 
+                    options: [
+                        {text: "Melapisi bagian yang rusak dengan lakban (electrical tape) dan lanjut bekerja.", isCorrect: false, rationale: "Lakban biasa tidak memiliki rating isolasi yang cukup untuk voltase las dan mudah terkelupas di lingkungan fabrikasi yang keras."},
+                        {text: "Segera hentikan pekerjaan, cabut kabel dari mesin, dan laporkan untuk perbaikan atau penggantian.", isCorrect: true, rationale: "Isolasi yang rusak adalah bahaya sengatan sekunder (secondary shock) yang serius dan harus segera diperbaiki oleh personel yang kompeten."},
+                        {text: "Tetap gunakan, asalkan tidak menyentuh bagian yang terkelupas.", isCorrect: false, rationale: "Sangat mudah untuk lupa dan tidak sengaja menyentuhnya, atau kabel itu bisa menyentuh benda kerja."},
+                        {text: "Menyiramnya dengan air agar tetap dingin.", isCorrect: false, rationale: "Menambahkan air ke bahaya listrik hanya akan memperburuk risiko sengatan."}
+                    ]
+                },
+                { 
+                    question: "Dalam radius berapa (standar OSHA) dari lokasi kerja panas, semua bahan mudah terbakar harus dipindahkan?", 
+                    options: [
+                        {text: "1 meter (3 kaki).", isCorrect: false, rationale: "Ini terlalu dekat; percikan api bisa terbang lebih jauh dari 1 meter."},
+                        {text: "5 meter (16 kaki).", isCorrect: false, rationale: "Ini lebih baik, tetapi standar minimum OSHA lebih jauh."},
+                        {text: "10.7 meter (35 kaki).", isCorrect: true, rationale: "OSHA mensyaratkan pembersihan radius 35 kaki (10.7m) dari semua bahan mudah terbakar, atau menutupinya dengan selimut tahan api jika tidak bisa dipindah."},
+                        {text: "50 meter (164 kaki).", isCorrect: false, rationale: "Ini biasanya berlebihan, kecuali ada risiko ledakan debu yang ekstrem."}
+                    ]
+                },
+                { 
+                    question: "Apa bahaya utama dari 'Radiasi Inframerah' (Infrared Radiation) yang dihasilkan dari busur las?", 
+                    options: [
+                        {text: "Menyebabkan 'Arc Eye'.", isCorrect: false, rationale: "'Arc Eye' (Photokeratitis) disebabkan oleh radiasi UV (Ultraviolet)."},
+                        {text: "Menyebabkan luka bakar termal pada kulit dan dapat merusak retina mata.", isCorrect: true, rationale: "Inframerah adalah radiasi panas. Paparan berlebih dapat membakar kulit dan (dalam jangka panjang) berkontribusi pada katarak atau kerusakan retina."},
+                        {text: "Menghasilkan gas Ozon.", isCorrect: false, rationale: "Ozon dihasilkan oleh radiasi UV yang berinteraksi dengan Oksigen."},
+                        {text: "Menyebabkan sengatan listrik.", isCorrect: false, rationale: "Inframerah adalah radiasi (panas), bukan arus listrik."}
+                    ]
+                },
+                { 
+                    question: "Saat mengelas material yang dilapisi (Coated), seperti Galvanis (Zinc) atau Cat, mengapa ventilasi ekstra SANGAT penting?", 
+                    options: [
+                        {text: "Karena lapisan itu membuat lasan jelek.", isCorrect: false, rationale: "Meskipun benar (lasannya bisa jelek), bahaya utamanya adalah kesehatan."},
+                        {text: "Karena lapisan (seperti seng/zinc) menghasilkan asap yang sangat beracun saat terbakar.", isCorrect: true, rationale: "Membakar seng (galvanis) menghasilkan 'Metal Fume Fever' (demam asap logam). Membakar cat bisa melepaskan timbal (lead) atau isosianat."},
+                        {text: "Karena lapisan itu memantulkan cahaya busur las lebih kuat.", isCorrect: false, rationale: "Pantulan mungkin sedikit meningkat, tetapi bahaya asap jauh lebih besar."},
+                        {text: "Karena lapisan itu bisa meledak.", isCorrect: false, rationale: "Lapisan itu akan terbakar dan berasap, tetapi biasanya tidak meledak (kecuali cat dalam wadah tertutup)."}
+                    ]
+                },
+                { 
+                    question: "Pakaian kerja yang paling direkomendasikan untuk welder (selain jaket/apron kulit) terbuat dari...", 
+                    options: [
+                        {text: "Poliester 100% (agar cepat kering).", isCorrect: false, rationale: "Poliester sangat berbahaya karena akan meleleh dan menempel di kulit."},
+                        {text: "Katun (Cotton) 100% atau Wol (Wool) yang dirawat tahan api (FR).", isCorrect: true, rationale: "Bahan alami seperti katun dan wol akan hangus (char) saat terkena percikan api, bukan meleleh, sehingga memberikan perlindungan yang lebih baik."},
+                        {text: "Nilon (Nylon).", isCorrect: false, rationale: "Nilon, seperti poliester, adalah bahan sintetis yang akan meleleh."},
+                        {text: "Campuran katun/poliester (Poly-cotton).", isCorrect: false, rationale: "Campuran ini masih mengandung poliester yang dapat meleleh, membuatnya kurang aman dibanding 100% katun."}
+                    ]
+                },
+                { 
+                    question: "Apa yang harus dilakukan jika elektroda SMAW (las stik) menempel (sticking) pada benda kerja?", 
+                    options: [
+                        {text: "Segera matikan mesin las.", isCorrect: false, rationale: "Mematikan mesin adalah opsi, tetapi biasanya operator dilatih untuk melepaskannya terlebih dahulu."},
+                        {text: "Tarik elektroda sekuat tenaga.", isCorrect: false, rationale: "Menarik lurus hanya akan memperkuat cengkeraman."},
+                        {text: "Goyangkan stang las (electrode holder) ke samping (gerakan memutar/mematahkan) untuk melepaskannya.", isCorrect: true, rationale: "Gerakan memutar atau 'mengupas' (peeling) biasanya akan mematahkan busur las dan melepaskan elektroda yang menempel."},
+                        {text: "Siram dengan air agar dingin.", isCorrect: false, rationale: "Menyiram air ke area las aktif sangat berbahaya (risiko sengatan dan uap)."}
+                    ]
+                },
+                { 
+                    question: "Apa fungsi dari 'Electrode Holder' (Stang Las) dan mengapa harus diperiksa?", 
+                    options: [
+                        {text: "Hanya untuk memegang elektroda; tidak perlu diperiksa.", isCorrect: false, rationale: "Stang las adalah komponen listrik vital dan harus diperiksa."},
+                        {text: "Untuk menjepit elektroda; harus diperiksa dari insulasi yang retak atau rahang yang longgar.", isCorrect: true, rationale: "Stang las mengalirkan arus las. Jika insulasinya retak, operator bisa tersengat (secondary shock). Rahang yang longgar menyebabkan panas berlebih."},
+                        {text: "Untuk mengatur Ampere.", isCorrect: false, rationale: "Ampere diatur pada mesin las, bukan pada stang las."},
+                        {text: "Untuk menyalakan api (seperti pemantik).", isCorrect: false, rationale: "Stang las menciptakan busur listrik, bukan api."}
+                    ]
+                },
+                { 
+                    question: "Apa bahaya utama dari lingkungan kerja yang basah atau lembab (termasuk keringat berlebih) saat mengelas?", 
+                    options: [
+                        {text: "Lasan akan menjadi rapuh.", isCorrect: false, rationale: "Kelembaban (hidrogen) memang bisa menyebabkan kerapuhan lasan, tapi ada bahaya yang lebih langsung bagi operator."},
+                        {text: "Meningkatkan risiko sengatan listrik (electric shock) secara drastis.", isCorrect: true, rationale: "Air (dan keringat) menurunkan hambatan (resistansi) tubuh, membuat sengatan sekunder (dari stang las) yang biasanya tidak fatal menjadi sangat berbahaya."},
+                        {text: "Helm las akan berembun.", isCorrect: false, rationale: "Embun mengganggu, tetapi bukan bahaya keselamatan yang mematikan."},
+                        {text: "Asap las akan lebih pekat.", isCorrect: false, rationale: "Kelembaban tidak secara signifikan meningkatkan volume asap."}
+                    ]
+                },
+                { 
+                    question: "Saat mengelas di dalam ruang terbatas (confined space), di mana tabung gas (Oksigen, Asetilena, Argon) harus ditempatkan?", 
+                    options: [
+                        {text: "Tepat di sebelah welder agar mudah diatur.", isCorrect: false, rationale: "Menempatkan tabung di dalam ruang terbatas sangat dilarang karena risiko kebocoran dan penumpukan gas."},
+                        {text: "Di luar ruang terbatas.", isCorrect: true, rationale: "Semua tabung gas harus selalu ditempatkan di luar ruang terbatas. Hanya selang (hose) yang boleh masuk."},
+                        {text: "Di titik terendah ruang terbatas.", isCorrect: false, rationale: "Gas berat (seperti Argon) akan berkumpul di titik terendah, membuatnya semakin berbahaya jika bocor."},
+                        {text: "Di atas ruang terbatas (di manhole).", isCorrect: false, rationale: "Menempatkan di manhole menghalangi akses keluar/masuk dan masih terlalu dekat."}
+                    ]
+                },
+                { 
+                    question: "Mengapa penting untuk membersihkan material dari minyak, gemuk (grease), atau pelarut (solvent) SEBELUM mengelas?", 
+                    options: [
+                        {text: "Agar lasan terlihat lebih mengkilap.", isCorrect: false, rationale: "Tampilan bukan alasan utama keselamatan."},
+                        {text: "Karena panas las dapat menguraikan zat-zat ini menjadi gas beracun (seperti Phosgene).", isCorrect: true, rationale: "Panas tinggi dan radiasi UV dari las dapat menguraikan pelarut pembersih (terutama yang mengandung klorin) menjadi gas Phosgene, yang sangat mematikan."},
+                        {text: "Agar klem massa (ground clamp) menempel lebih baik.", isCorrect: false, rationale: "Meskipun kebersihan membantu koneksi, bahaya gas beracun adalah alasan utamanya."},
+                        {text: "Agar tidak boros elektroda.", isCorrect: false, rationale: "Kontaminan memang mengganggu proses, tetapi bahaya utamanya adalah kesehatan."}
+                    ]
+                },
+                { 
+                    question: "Apa yang harus dilakukan dengan regulator gas yang rusak atau bocor?", 
+                    options: [
+                        {text: "Mencoba memperbaikinya sendiri dengan lakban atau lem.", isCorrect: false, rationale: "Regulator adalah alat presisi bertekanan tinggi. Perbaikan 'darurat' sangat berbahaya dan bisa gagal total."},
+                        {text: "Hentikan penggunaan, beri label 'RUSAK', dan kirim ke bengkel perbaikan yang berkualifikasi.", isCorrect: true, rationale: "Regulator yang rusak tidak boleh digunakan sama sekali dan harus diperbaiki oleh spesialis."},
+                        {text: "Tetap gunakan, tetapi kurangi tekanan kerjanya.", isCorrect: false, rationale: "Regulator yang rusak tidak dapat dipercaya untuk mengontrol tekanan sama sekali."},
+                        {text: "Lumasi dengan oli agar tidak macet.", isCorrect: false, rationale: "Melumasi regulator (terutama regulator Oksigen) dengan oli dapat menyebabkan ledakan."}
+                    ]
+                },
+                { 
+                    question: "Apa bahaya utama dari menggunakan tabung Asetilena pada tekanan kerja di atas 15 psi?", 
+                    options: [
+                        {text: "Gas akan habis terlalu cepat.", isCorrect: false, rationale: "Ini masalah efisiensi, bukan keselamatan."},
+                        {text: "Asetilena menjadi sangat tidak stabil dan dapat meledak secara spontan.", isCorrect: true, rationale: "Asetilena murni (free acetylene) sangat tidak stabil pada tekanan di atas 15 psi dan dapat terurai secara eksplosif tanpa sumber api eksternal."},
+                        {text: "Akan membekukan regulator.", isCorrect: false, rationale: "Aliran tinggi memang mendinginkan, tetapi bahaya utamanya adalah ledakan."},
+                        {text: "Nyala api akan terlalu kecil.", isCorrect: false, rationale: "Tekanan lebih tinggi justru menghasilkan nyala api lebih besar, tetapi tidak stabil."}
+                    ]
+                },
+                { 
+                    question: "Saat tidak digunakan (misal saat istirahat makan siang), apa yang harus dilakukan welder pada stang las Oxy-fuel (torch)?", 
+                    options: [
+                        {text: "Menggantungnya di tabung Oksigen.", isCorrect: false, rationale: "Sangat dilarang menggantung torch (terutama yang menyala) di tabung bertekanan."},
+                        {text: "Mematikan api di torch, dan menutup katup pada tabung gas.", isCorrect: true, rationale: "Untuk istirahat yang lama, pasokan gas dari sumber (tabung) harus ditutup untuk mencegah kebocoran gas yang tidak terdeteksi."},
+                        {text: "Mematikan api di torch, tetapi biarkan katup tabung terbuka agar cepat mulai lagi.", isCorrect: false, rationale: "Membiarkan selang bertekanan saat tidak diawasi adalah risiko kebocoran gas dan kebakaran."},
+                        {text: "Meletakkannya di lantai.", isCorrect: false, rationale: "Meletakkan di lantai berisiko terinjak atau menyebabkan kebakaran jika masih panas."}
+                    ]
+                }
+            ];
+            // --- AKHIR DARI DATA KUIS ---
+
+
+            // --- Transformasi Data ---
+            // Mengubah data mentah welding ke format yang dibutuhkan oleh template kuis_lms
+            const quizData = weldingRawData.map((item, index) => {
+                const questionText = `${index + 1}. ${item.question}`;
+                const options = item.options.map(opt => opt.text);
+                const correctIndex = item.options.findIndex(opt => opt.isCorrect === true);
+                const correctExplanation = item.options[correctIndex].rationale;
+                
+                // Mengambil 'rationale' dari jawaban salah pertama sebagai 'hint'
+                const incorrectOption = item.options.find(opt => opt.isCorrect === false);
+                const hintText = incorrectOption ? incorrectOption.rationale : "Pikirkan tentang prinsip dasarnya."; // Fallback hint
+
+                return {
+                    question: questionText,
+                    options: options,
+                    answer: correctIndex,
+                    hint: hintText, // 'Rationale' dari jawaban salah digunakan sebagai hint
+                    explanation: correctExplanation // 'Rationale' dari jawaban benar digunakan sebagai penjelasan
+                };
+            });
+
+            // --- Variabel Status Kuis (dari template kuis_forklift_lms.html) ---
+            let currentQuestionIndex = 0;
+            let userAnswers = new Array(quizData.length).fill(null);
+            let currentSelection = null; // Menyimpan pilihan sementara sebelum di-check
+
+            // --- Elemen DOM (dari template kuis_forklift_lms.html) ---
+            const startScreen = document.getElementById('start-screen');
+            const quizScreen = document.getElementById('quiz-screen');
+            const resultsScreen = document.getElementById('results-screen');
+
+            const startBtn = document.getElementById('start-btn');
+            const prevBtn = document.getElementById('prev-btn');
+            const checkBtn = document.getElementById('check-btn'); // Tombol "Check Jawaban"
+            const nextBtn = document.getElementById('next-btn'); // Tombol "Berikutnya"
+            const submitBtn = document.getElementById('submit-btn');
+            const retakeBtn = document.getElementById('retake-btn');
+            const hintBtn = document.getElementById('hint-btn'); // Tombol "Hint"
+            const retryBtn = document.getElementById('retry-btn'); // Tombol "Coba Lagi"
+
+            const questionContent = document.getElementById('question-content');
+            const questionText = document.getElementById('question-text');
+            const optionsContainer = document.getElementById('options-container');
+            const progressText = document.getElementById('progress-text');
+            const progressBar = document.getElementById('progress-bar');
+            
+            const paletteContainer = document.getElementById('question-palette'); // [BARU]
+
+            const feedbackBox = document.getElementById('feedback-box'); // Box feedback
+            const hintBox = document.getElementById('hint-box'); // Box hint
+
+            const scoreContainer = document.getElementById('score-container');
+            const resultsSummary = document.getElementById('results-summary');
+
+            // --- Fungsi-Fungsi (dari template kuis_forklift_lms.html) ---
+            
+            // [BARU] Fungsi untuk membuat palet navigasi soal
+            function generateQuestionPalette() {
+                paletteContainer.innerHTML = ''; // Kosongkan dulu
+                quizData.forEach((_, index) => {
+                    const paletteLink = document.createElement('a');
+                    paletteLink.className = 'palette-item';
+                    paletteLink.textContent = index + 1;
+                    paletteLink.href = "#"; // Agar bisa di-tab
+                    paletteLink.setAttribute('aria-label', `Pindah ke soal ${index + 1}`);
+                    paletteLink.addEventListener('click', (e) => {
+                        e.preventDefault(); // Mencegah scrolling ke atas
+                        currentQuestionIndex = index; // Set index saat ini
+                        loadQuestion(index); // Muat soal yang diklik
+                    });
+                    paletteContainer.appendChild(paletteLink);
+                });
+            }
+
+            // [BARU] Fungsi untuk update status palet
+            function updatePaletteStatus(activeIndex) {
+                const items = paletteContainer.querySelectorAll('.palette-item');
+                items.forEach((item, index) => {
+                    item.classList.remove('palette-active', 'palette-answered');
+
+                    // Tandai yang sudah dijawab
+                    if (userAnswers[index] !== null) {
+                        item.classList.add('palette-answered');
+                    }
+
+                    // Tandai yang aktif
+                    if (index === activeIndex) {
+                        item.classList.add('palette-active');
+                    }
+                });
+            }
+
+            function startQuiz() {
+                startScreen.classList.add('hidden');
+                quizScreen.classList.remove('hidden');
+                generateQuestionPalette(); // [BARU] Panggil fungsi ini saat kuis dimulai
+                loadQuestion(currentQuestionIndex);
+            }
+
+            function loadQuestion(index) {
+                // Terapkan efek fade out
+                questionContent.style.opacity = 0;
+                currentSelection = null; // Reset pilihan sementara
+
+                setTimeout(() => {
+                    const question = quizData[index];
+                    questionText.textContent = question.question;
+                    optionsContainer.innerHTML = '';
+                    
+                    // Sembunyikan semua elemen tambahan
+                    feedbackBox.classList.add('hidden');
+                    hintBox.classList.add('hidden');
+                    retryBtn.classList.add('hidden');
+                    nextBtn.classList.add('hidden');
+                    submitBtn.classList.add('hidden');
+                    
+                    // Tampilkan tombol default
+                    checkBtn.classList.remove('hidden');
+                    hintBtn.classList.remove('hidden');
+                    
+                    // Nonaktifkan tombol check sampai ada pilihan
+                    checkBtn.disabled = true;
+
+                    // Muat teks hint
+                    hintBox.innerHTML = `<strong>Petunjuk:</strong> ${question.hint}`;
+
+                    question.options.forEach((option, optionIndex) => {
+                        const li = document.createElement('li');
+                        // Cek apakah jawaban sudah pernah disimpan (saat navigasi prev/next)
+                        const isSelected = userAnswers[index] === optionIndex;
+                        
+                        li.innerHTML = `
+                            <label class="option-item block w-full p-4 border-2 rounded-lg cursor-pointer ${isSelected ? 'bg-blue-100 border-blue-400' : 'border-gray-200 hover:bg-gray-100'}">
+                                <input type="radio" name="question${index}" value="${optionIndex}" class="hidden" ${isSelected ? 'checked' : ''}>
+                                <span class="font-medium text-gray-700">${option}</span>
+                            </label>
+                        `;
+                        
+                        li.querySelector('label').addEventListener('click', () => {
+                            selectAnswer(optionIndex);
+                        });
+                        
+                        optionsContainer.appendChild(li);
+                    });
+
+                    // Update Progres
+                    progressText.textContent = `Pertanyaan ${index + 1} dari ${quizData.length}`;
+                    progressBar.style.width = `${((index + 1) / quizData.length) * 100}%`;
+
+                    // Update Tombol Navigasi
+                    prevBtn.disabled = index === 0;
+
+                    // Logika jika pertanyaan sudah pernah dijawab benar
+                    if (userAnswers[index] !== null && userAnswers[index] === quizData[index].answer) {
+                        lockQuestion(quizData[index].answer, quizData[index].answer); // Tampilkan jawaban benar
+                        checkBtn.classList.add('hidden');
+                        hintBtn.classList.add('hidden');
+                        if (index === quizData.length - 1) {
+                            submitBtn.classList.remove('hidden');
+                        } else {
+                            nextBtn.classList.remove('hidden');
+                        }
+                    } else if (userAnswers[index] !== null && userAnswers[index] !== quizData[index].answer) {
+                        // Jika sudah dijawab salah sebelumnya
+                         lockQuestion(userAnswers[index], quizData[index].answer); // Tampilkan jawaban salah dan benar
+                         feedbackBox.innerHTML = `<strong>Salah.</strong><br>${question.explanation}`;
+                         feedbackBox.className = 'feedback-box feedback-incorrect';
+                         feedbackBox.classList.remove('hidden');
+                         retryBtn.classList.remove('hidden');
+                         checkBtn.classList.add('hidden');
+                         hintBtn.classList.add('hidden');
+                         if (index === quizData.length - 1) {
+                            submitBtn.classList.remove('hidden');
+                         } else {
+                            nextBtn.classList.remove('hidden');
+                         }
+                    }
+                    
+                    // Terapkan efek fade in
+                    questionContent.style.opacity = 1;
+
+                    // [BARU] Update palet navigasi
+                    updatePaletteStatus(index);
+
+                }, 200); // Waktu untuk animasi fade
+            }
+
+            function selectAnswer(optionIndex) {
+                 // Hanya izinkan pemilihan jika opsi belum terkunci
+                const targetLabel = optionsContainer.querySelectorAll('.option-item')[optionIndex];
+                if (targetLabel.classList.contains('option-locked')) {
+                    return;
+                }
+
+                currentSelection = optionIndex; // Simpan pilihan sementara
+                
+                // Update tampilan pilihan
+                const options = optionsContainer.querySelectorAll('.option-item');
+                options.forEach((opt, idx) => {
+                    if (!opt.classList.contains('option-locked')) { // Hanya ubah yang belum terkunci
+                        if (idx === optionIndex) {
+                            opt.classList.add('bg-blue-100', 'border-blue-400');
+                            opt.classList.remove('border-gray-200', 'hover:bg-gray-100');
+                        } else {
+                            opt.classList.remove('bg-blue-100', 'border-blue-400');
+                            opt.classList.add('border-gray-200', 'hover:bg-gray-100');
+                        }
+                    }
+                });
+
+                // Aktifkan tombol check
+                checkBtn.disabled = false;
+            }
+
+            // Fungsi baru: Menampilkan Petunjuk
+            function showHint() {
+                hintBox.classList.toggle('hidden');
+            }
+
+            // Fungsi baru: Mereset pertanyaan saat ini
+            function retryQuestion() {
+                userAnswers[currentQuestionIndex] = null; // Hapus jawaban tersimpan
+                currentSelection = null;
+                
+                // Sembunyikan elemen feedback
+                feedbackBox.classList.add('hidden');
+                hintBox.classList.add('hidden');
+                retryBtn.classList.add('hidden');
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.add('hidden'); // Sembunyikan juga tombol submit
+
+                // Tampilkan tombol default
+                checkBtn.classList.remove('hidden');
+                hintBtn.classList.remove('hidden');
+                checkBtn.disabled = true; // Nonaktifkan sampai memilih lagi
+                
+                // Aktifkan lagi semua opsi
+                const options = optionsContainer.querySelectorAll('.option-item');
+                options.forEach((opt) => {
+                    opt.classList.remove('bg-blue-100', 'border-blue-400', 'option-locked', 'correct', 'incorrect', 'actual-answer');
+                    opt.classList.add('border-gray-200', 'hover:bg-gray-100');
+                    opt.querySelector('input[type="radio"]').disabled = false;
+                    opt.style.cursor = 'pointer';
+                    opt.querySelector('input[type="radio"]').checked = false; // Pastikan radio button tidak terpilih
+                });
+
+                // [BARU] Update palet untuk menghapus status "answered"
+                updatePaletteStatus(currentQuestionIndex);
+            }
+
+            // Fungsi baru: Mengunci pilihan setelah dicek
+            function lockQuestion(userPick, correctPick) {
+                const options = optionsContainer.querySelectorAll('.option-item');
+                options.forEach((opt, idx) => {
+                    const input = opt.querySelector('input[type="radio"]');
+                    input.disabled = true;
+                    opt.classList.add('option-locked');
+                    opt.style.cursor = 'not-allowed';
+                    // Hapus hover effect
+                    opt.classList.remove('hover:bg-gray-100', 'bg-blue-100', 'border-blue-400'); 
+
+                    if (idx === correctPick) {
+                        // Jika ini jawaban yang benar
+                        opt.classList.remove('border-gray-200');
+                        opt.classList.add('correct');
+                        if (userPick !== correctPick && userPick !== null) { // Tambah cek userPick !== null
+                            opt.classList.add('actual-answer'); // Tandai jika pilihan user salah
+                        }
+                    } else if (idx === userPick) {
+                        // Jika ini pilihan user dan salah
+                        opt.classList.remove('border-gray-200');
+                        opt.classList.add('incorrect');
+                    } else {
+                         // Opsi lain yang tidak dipilih dan tidak benar
+                         opt.classList.add('border-gray-200');
+                    }
+                });
+            }
+
+            // Fungsi baru: Memeriksa Jawaban
+            function checkAnswer() {
+                if (currentSelection === null) return; // Jika tidak ada yang dipilih
+                
+                const question = quizData[currentQuestionIndex];
+                const isCorrect = currentSelection === question.answer;
+
+                // Simpan jawaban
+                userAnswers[currentQuestionIndex] = currentSelection;
+                
+                // Kunci semua opsi
+                lockQuestion(currentSelection, question.answer);
+
+                // Tampilkan tombol navigasi yang sesuai
+                hintBtn.classList.add('hidden');
+                checkBtn.classList.add('hidden');
+
+                if (currentQuestionIndex === quizData.length - 1) {
+                    submitBtn.classList.remove('hidden');
+                } else {
+                    nextBtn.classList.remove('hidden');
+                }
+
+                // Tampilkan feedback
+                if (isCorrect) {
+                    feedbackBox.innerHTML = `<strong>Benar!</strong> Jawaban Anda sudah tepat.`;
+                    feedbackBox.className = 'feedback-box feedback-correct';
+                } else {
+                    feedbackBox.innerHTML = `<strong>Salah.</strong><br>${question.explanation}`;
+                    feedbackBox.className = 'feedback-box feedback-incorrect';
+                    retryBtn.classList.remove('hidden'); // Tampilkan tombol "Coba Lagi"
+                }
+                feedbackBox.classList.remove('hidden');
+
+                // [BARU] Update palet untuk menandai soal ini sudah dijawab
+                updatePaletteStatus(currentQuestionIndex);
+            }
+
+
+            function nextQuestion() {
+                if (currentQuestionIndex < quizData.length - 1) {
+                    currentQuestionIndex++;
+                    loadQuestion(currentQuestionIndex);
+                }
+            }
+
+            function prevQuestion() {
+                if (currentQuestionIndex > 0) {
+                    currentQuestionIndex--;
+                    loadQuestion(currentQuestionIndex);
+                }
+            }
+
+            function submitQuiz() {
+                quizScreen.classList.add('hidden');
+                resultsScreen.classList.remove('hidden');
+                calculateResults();
+            }
+
+            function calculateResults() {
+                let score = 0;
+                resultsSummary.innerHTML = ''; // Kosongkan ringkasan
+
+                quizData.forEach((question, index) => {
+                    const userAnswer = userAnswers[index];
+                    const correctAnswer = question.answer;
+                    const isCorrect = userAnswer === correctAnswer;
+                    
+                    if (isCorrect) {
+                        score++;
+                    }
+
+                    // Buat elemen ringkasan
+                    const resultItem = document.createElement('div');
+                    resultItem.className = 'p-4 rounded-lg border';
+                    
+                    let userAnswerText = '<i class="opacity-60">Tidak dijawab</i>';
+                    if (userAnswer !== null) {
+                        // Periksa apakah userAnswer valid index
+                        if (question.options[userAnswer] !== undefined) {
+                            userAnswerText = question.options[userAnswer];
+                        } else {
+                             userAnswerText = '<i class="opacity-60 text-red-500">Jawaban tidak valid</i>'; // Handle error case
+                        }
+                    }
+                    // Pastikan correctAnswer juga index yang valid
+                    const correctAnswerText = question.options[correctAnswer] !== undefined ? question.options[correctAnswer] : '<i class="opacity-60 text-red-500">Jawaban benar tidak valid</i>';
+                    
+                    // PERBAIKAN: Hapus `${index + 1}.` karena `question.question` sudah ada nomornya
+                    if (isCorrect) {
+                        resultItem.classList.add('bg-green-50', 'border-green-200');
+                        resultItem.innerHTML = `
+                            <p class="font-semibold text-gray-700">${question.question}</p>
+                            <p class="text-green-700 mt-1">Jawaban Anda: ${userAnswerText} (Benar)</p>
+                        `;
+                    } else {
+                        resultItem.classList.add('bg-red-50', 'border-red-200');
+                        resultItem.innerHTML = `
+                            <p class="font-semibold text-gray-700">${question.question}</p>
+                            <p class="text-red-700 mt-1">Jawaban Anda: ${userAnswerText}</p>
+                            <p class="text-green-700 mt-1">Jawaban Benar: ${correctAnswerText}</p>
+                        `;
+                    }
+                    resultsSummary.appendChild(resultItem);
+                });
+
+                // Tampilkan Skor Total
+                const scorePercent = Math.round((score / quizData.length) * 100);
+                let scoreColor = 'text-red-600';
+                if (scorePercent >= 80) {
+                    scoreColor = 'text-green-600';
+                } else if (scorePercent >= 60) {
+                    scoreColor = 'text-yellow-600';
+                }
+                
+                scoreContainer.innerHTML = `
+                    <p class="text-lg text-gray-600">Skor Anda:</p>
+                    <p class="text-7xl font-bold ${scoreColor} my-2">${scorePercent}%</p>
+                    <p class="text-lg text-gray-600">Anda menjawab <span class="font-bold">${score}</span> dari <span class="font-bold">${quizData.length}</span> pertanyaan dengan benar.</p>
+                `;
+            }
+
+            function retakeQuiz() {
+                // Tombol "Refresh" yang Anda minta
+                location.reload();
+            }
+
+
+            // --- Event Listeners ---
+            startBtn.addEventListener('click', startQuiz);
+            prevBtn.addEventListener('click', prevQuestion);
+            
+            // Event listener baru
+            hintBtn.addEventListener('click', showHint);
+            checkBtn.addEventListener('click', checkAnswer);
+            retryBtn.addEventListener('click', retryQuestion);
+            nextBtn.addEventListener('click', nextQuestion); // Tombol "Berikutnya" yang baru
+            
+            submitBtn.addEventListener('click', submitQuiz);
+            retakeBtn.addEventListener('click', retakeQuiz);
+
+        });
+    </script>
+</body>
+</html>
